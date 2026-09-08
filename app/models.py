@@ -88,6 +88,8 @@ class Prospetto:
     # Acquisto
     percentuale_acquisto: float = 0.0
     prezzo_acquisto: float = 0.0
+    intermediazione: float = 0.0
+    percentuale_esborso_totale: float = 0.0
     imposta_registro: float = 0.0
     imposte_fisse: float = 0.0
     notaio: float = 0.0
@@ -111,6 +113,9 @@ class Prospetto:
     comparabili: dict[str, Any] = field(default_factory=dict)
     valore_mercato_lordo: float = 0.0
     coefficienti_applicati: dict[str, float] = field(default_factory=dict)
+    metodo_uscita: str = ""
+    prezzo_uscita_da_file: float = 0.0
+    prezzo_uscita_da_mercato: float = 0.0
     prezzo_uscita: float = 0.0
     commissione_vendita: float = 0.0
     costi_uscita: float = 0.0

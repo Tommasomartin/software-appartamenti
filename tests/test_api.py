@@ -90,16 +90,26 @@ def test_orizzonte_piu_lungo_riduce_l_utile(client, pool):
 
 
 def test_correzione_manuale_ricalcola(client, pool):
+    """Raddoppiando i mq raddoppia la stima di mercato; il prezzo del file no."""
     righe = client.get("/api/dashboard").json()["righe"]
     riga = next(r for r in righe if r["immobile"]["tipologia"] == "residenziale")
     identificativo = riga["immobile"]["id"]
-    prima = riga["prospetto"]["prezzo_uscita"]
+    prima = riga["prospetto"]["prezzo_uscita_da_mercato"]
 
     dopo = client.patch(
         f"/api/immobile/{identificativo}",
         json={"superficie_mq": riga["immobile"]["superficie_mq"] * 2},
     ).json()
-    assert dopo["prospetto"]["prezzo_uscita"] > prima * 1.8
+    assert dopo["prospetto"]["prezzo_uscita_da_mercato"] > prima * 1.8
+
+
+def test_correzione_del_prezzo_sposta_la_rivendita(client, pool):
+    """Con il metodo 'file' la rivendita segue il valore a base d'asta."""
+    riga = client.get("/api/dashboard").json()["righe"][0]
+    dopo = client.patch(
+        f"/api/immobile/{riga['immobile']['id']}", json={"prezzo_base": 200_000}
+    ).json()
+    assert dopo["prospetto"]["prezzo_uscita"] == pytest.approx(140_000)
 
 
 def test_correzione_valore_non_valido(client, pool):

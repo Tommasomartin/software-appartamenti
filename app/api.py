@@ -227,13 +227,17 @@ COLONNE_EXPORT = [
 
 COLONNE_PROSPETTO = [
     ("percentuale_acquisto", "% acquisto"), ("prezzo_acquisto", "Prezzo acquisto"),
+    ("intermediazione", "Intermediazione"), ("percentuale_esborso_totale", "% esborso su valore file"),
     ("imposta_registro", "Imposta registro 2%"), ("notaio", "Notaio"),
     ("commissione_acquisto", "Agenzia acquisto"), ("altri_costi_acquisto", "Altri costi"),
     ("capex_ristrutturazione", "Ristrutturazione"), ("cassa_iniziale", "Cassa iniziale"),
     ("imu_annua", "IMU annua"), ("oneri_annui", "Oneri annui"),
     ("ricavo_locazione_annuo", "Ricavo locazione annuo"),
     ("mantenimento_netto_annuo", "Mantenimento netto annuo"),
-    ("valore_mercato_eur_mq", "Valore mercato EUR/mq"), ("prezzo_uscita", "Prezzo uscita"),
+    ("valore_mercato_eur_mq", "Valore mercato EUR/mq"),
+    ("prezzo_uscita_da_file", "Rivendita da regola file"),
+    ("prezzo_uscita_da_mercato", "Rivendita da comparabili"),
+    ("metodo_uscita", "Metodo uscita"), ("prezzo_uscita", "Prezzo uscita"),
     ("commissione_vendita", "Agenzia vendita 2%"), ("incasso_netto", "Incasso netto"),
     ("investimento_totale", "Investimento totale"), ("utile", "Utile"),
     ("multiplo", "Multiplo"), ("roi", "ROI"), ("roi_annualizzato", "ROI annualizzato"),

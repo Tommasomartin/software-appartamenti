@@ -59,7 +59,12 @@ sconto, FAB alto = meno sconto. Valori di partenza, tutti modificabili dal panne
 
 | FAB | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Paghiamo | 30% | 30% | 35% | 40% | 45% | 50% | 55% | 60% | 65% | 70% |
+| Prezzo | 30% | 30% | 35% | 40% | 45% | 50% | 55% | 60% | 65% | 70% |
+| + intermediazione | 10% | 10% | 10% | 10% | 10% | 10% | 10% | 10% | 10% | 10% |
+| **Esborso totale** | **40%** | **40%** | **45%** | **50%** | **55%** | **60%** | **65%** | **70%** | **75%** | **80%** |
+
+L'**intermediazione del 10%** si calcola sul valore a base d'asta, non sul prezzo già scontato:
+si somma alla percentuale FAB.
 
 ### 3. Calcola tutti i costi
 
@@ -81,7 +86,18 @@ e su qualunque orizzonte scegli in alto (fino a 36 mesi):
 **Rivendita** — provvigione agenzia 2% sul prezzo finale, marketing, APE e pratiche, e
 opzionalmente la tassazione sulla plusvalenza.
 
-### 4. Stima il prezzo di rivendita sui comparabili di zona
+### 4. Stima il prezzo di rivendita — due letture indipendenti
+
+**Regola commerciale (predefinita):** si rivende al **valore del file meno il 30%**.
+200.000 € nel file → 140.000 € di rivendita.
+
+**Stima di mercato:** €/mq di zona × superficie, rettificato per stato di conservazione,
+occupazione, piano e liquidità della tipologia.
+
+Le due letture restano **entrambe visibili** nella scheda, e il sistema ti avvisa quando
+divergono di molto: è il segnale che il valore del file è fuori mercato o che c'è più margine
+di quanto la regola suggerisca. Dal pannello *Ipotesi* scegli quale adottare — regola
+commerciale, stima di mercato, o il minore dei due.
 
 Per ogni immobile trovi il **€/mq di zona negli ultimi 3, 6 e 12 mesi**, l'intervallo
 min–max della zona e la variazione annua del mercato.
@@ -101,9 +117,15 @@ I terreni agricoli usano valori medi regionali.
 
 Ogni immobile riceve un **semaforo**:
 
-- 🟢 **verde** — multiplo ≥ 2,0x, ROI ≥ 60% e utile ≥ 30.000 €
-- 🟡 **giallo** — multiplo ≥ 1,35x, ROI ≥ 25% e utile ≥ 8.000 €
+- 🟢 **verde** — multiplo ≥ 1,30x, ROI ≥ 30% e utile ≥ 20.000 €
+- 🟡 **giallo** — multiplo ≥ 1,12x, ROI ≥ 10% e utile ≥ 4.000 €
 - 🔴 **rosso** — sotto le soglie, o in perdita
+
+> **Il tetto strutturale.** Con esborso al 40% del valore del file e rivendita al 70%, il
+> multiplo massimo possibile è **1,75x** (70/40), e quello realistico dopo i costi è **1,36x**.
+> Le soglie sono tarate su questa realtà: alzare il verde sopra 1,4x non lascerebbe passare
+> nessun immobile. Dal FAB 6 in su l'operazione è strutturalmente in perdita (si esborsa il
+> 60% o più e si rivende al 70%, senza spazio per costi e gestione).
 
 Le soglie sono modificabili. Un immobile verde viene **declassato** se è occupato senza titolo
 o se i dati letti dal file sono troppo incompleti: la colonna **Dati** mostra la confidenza

@@ -175,6 +175,8 @@ const COLONNE = [
   { campo: "prezzo_base", etichetta: "Prezzo da file", cella: ({ immobile: i }) => euro(i.prezzo_base) },
   { campo: "prezzo_acquisto", etichetta: "Acquisto scontato", cella: ({ prospetto: p }) =>
       `${euro(p.prezzo_acquisto)}<span class="sottotesto">${percento(p.percentuale_acquisto)} del base</span>` },
+  { campo: "intermediazione", etichetta: "Intermediazione", cella: ({ prospetto: p }) =>
+      `${euro(p.intermediazione)}<span class="sottotesto">esborso ${percento(p.percentuale_esborso_totale)} del base</span>` },
   { campo: "cassa_iniziale", etichetta: "Cassa iniziale", cella: ({ prospetto: p }) =>
       `${euro(p.cassa_iniziale)}<span class="sottotesto">+ ${euro(p.totale_costi_acquisto)} costi</span>` },
   { campo: "mantenimento_netto_annuo", etichetta: "Gestione/anno", cella: ({ prospetto: p }) =>
@@ -331,6 +333,8 @@ async function apriDettaglio(id) {
         <h3>1. Acquisto</h3>
         ${voce("Prezzo a base d'asta (da file)", euro(i.prezzo_base))}
         ${voce(`Prezzo di acquisto — FAB ${i.fab ?? "n.d."} al ${percento(p.percentuale_acquisto)}`, euro(p.prezzo_acquisto))}
+        ${voce(`Intermediazione (${percento(stato.ipotesi.acquisto.intermediazione_pct)} del valore a base d'asta)`, euro(p.intermediazione))}
+        ${voce("<strong>Esborso su valore a base d'asta</strong>", `<strong>${percento(p.percentuale_esborso_totale)}</strong>`)}
         ${voce(`Imposta di registro (${percento(stato.ipotesi.acquisto.imposta_registro_pct)}, acquisto da fondo)`, euro(p.imposta_registro))}
         ${voce("Imposte ipotecaria e catastale", euro(p.imposte_fisse))}
         ${voce("Notaio (onorario + IVA + spese)", euro(p.notaio))}
@@ -376,7 +380,11 @@ async function apriDettaglio(id) {
         ${voce(`Valore di mercato lordo (${numero(i.superficie_mq)} mq × ${euro(p.valore_mercato_eur_mq)})`, euro(p.valore_mercato_lordo))}
         ${Object.entries(p.coefficienti_applicati || {}).filter(([k]) => !k.startsWith("_"))
             .map(([k, v]) => voce(`Rettifica ${titolo(k)}`, `× ${numero(v, 2)}`)).join("")}
-        ${voce("Prezzo di rivendita atteso", euro(p.prezzo_uscita), "totale")}
+        ${voce(`Rivendita da regola commerciale (valore file − ${percento(stato.ipotesi.uscita.sconto_su_valore_file_pct)})`,
+               euro(p.prezzo_uscita_da_file))}
+        ${voce("Rivendita da comparabili di zona", euro(p.prezzo_uscita_da_mercato))}
+        ${voce(`Prezzo di rivendita adottato <span class="sottotesto">metodo: ${p.metodo_uscita}</span>`,
+               euro(p.prezzo_uscita), "totale")}
         ${voce(`Provvigione agenzia vendita (${percento(stato.ipotesi.uscita.commissione_agenzia_vendita_pct)})`, `− ${euro(p.commissione_vendita)}`)}
         ${voce("Marketing, APE e pratiche", `− ${euro(p.costi_uscita)}`)}
         ${p.tassazione_plusvalenza > 0 ? voce("Tassazione plusvalenza", `− ${euro(p.tassazione_plusvalenza)}`) : ""}
@@ -497,6 +505,7 @@ function apriIpotesi() {
         <h3>Costi di acquisto</h3>
         <div class="griglia-2">
           ${num("acquisto.imposta_registro_pct", "Imposta di registro (acquisto da fondo)")}
+          ${num("acquisto.intermediazione_pct", "Intermediazione (sul valore del file)")}
           ${num("acquisto.commissione_agenzia_acquisto_pct", "Provvigione agenzia acquisto")}
           ${num("acquisto.due_diligence_fissa", "Due diligence", "50")}
           ${num("acquisto.perizia_fissa", "Perizia", "50")}
@@ -507,7 +516,15 @@ function apriIpotesi() {
 
       <div class="blocco">
         <h3>Rivendita</h3>
+        <label class="campo" style="margin-bottom:10px">Come si stima il prezzo di rivendita
+          <select id="sel-metodo-uscita">
+            <option value="file">Valore del file meno lo sconto (regola commerciale)</option>
+            <option value="mercato">Stima sui comparabili di zona</option>
+            <option value="prudenziale">Il minore fra i due</option>
+          </select>
+        </label>
         <div class="griglia-2">
+          ${num("uscita.sconto_su_valore_file_pct", "Sconto di rivendita sul valore del file")}
           ${num("uscita.commissione_agenzia_vendita_pct", "Provvigione agenzia vendita")}
           ${num("uscita.sconto_trattativa_pct", "Sconto medio in trattativa")}
           ${num("uscita.spese_marketing_fisse", "Spese marketing", "50")}
@@ -551,6 +568,8 @@ function apriIpotesi() {
       </div>
     </div>`);
 
+  $("#sel-metodo-uscita").value = ip.uscita.metodo || "file";
+
   $("#btn-salva-ipotesi").addEventListener("click", async () => {
     const nuove = JSON.parse(JSON.stringify(stato.ipotesi));
     $("#cassetto").querySelectorAll("[data-ipotesi]").forEach((el) => {
@@ -562,6 +581,7 @@ function apriIpotesi() {
       nuove.fab.scala[el.dataset.fab] = parseFloat(el.value) || 0;
     });
     nuove.uscita.applica_tassazione_plusvalenza = $("#chk-plusvalenza").checked;
+    nuove.uscita.metodo = $("#sel-metodo-uscita").value;
     nuove.mantenimento.applica_tari_se_libero = $("#chk-tari").checked;
     try {
       await api("/api/ipotesi", {

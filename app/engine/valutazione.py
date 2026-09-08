@@ -7,6 +7,11 @@ from app.engine.punteggio import assegna_semaforo, calcola_confidenza
 from app.models import Immobile, Prospetto
 
 
+def euro_it(valore: float) -> str:
+    """Formatta un importo in stile italiano per i messaggi di avviso."""
+    return f"{valore:,.0f} EUR".replace(",", ".")
+
+
 def percentuale_acquisto(imm: Immobile, ipotesi: dict) -> float:
     """Quota del prezzo a base d'asta effettivamente pagata, secondo il FAB.
 
@@ -48,7 +53,8 @@ def calcola(imm: Immobile, ipotesi: dict, orizzonte_mesi: int | None = None) -> 
     p.percentuale_acquisto = percentuale_acquisto(imm, ipotesi)
     p.prezzo_acquisto = prezzo_base * p.percentuale_acquisto
 
-    voci_acquisto = costi.costi_acquisto(p.prezzo_acquisto, ipotesi)
+    voci_acquisto = costi.costi_acquisto(p.prezzo_acquisto, ipotesi, prezzo_base)
+    p.intermediazione = voci_acquisto["intermediazione"]
     p.imposta_registro = voci_acquisto["imposta_registro"]
     p.imposte_fisse = voci_acquisto["imposte_fisse"]
     p.notaio = voci_acquisto["notaio"]
@@ -57,6 +63,9 @@ def calcola(imm: Immobile, ipotesi: dict, orizzonte_mesi: int | None = None) -> 
     p.totale_costi_acquisto = voci_acquisto["totale"]
     p.capex_ristrutturazione = costi.capex_ristrutturazione(imm)
     p.cassa_iniziale = p.prezzo_acquisto + p.totale_costi_acquisto + p.capex_ristrutturazione
+    if prezzo_base > 0:
+        # Quota del valore a base d'asta che esce di cassa fra prezzo e intermediazione
+        p.percentuale_esborso_totale = (p.prezzo_acquisto + p.intermediazione) / prezzo_base
 
     # ---------------- Valore di mercato e uscita ----------------
     comp = comparabili.stima(imm)
@@ -102,24 +111,45 @@ def calcola(imm: Immobile, ipotesi: dict, orizzonte_mesi: int | None = None) -> 
     coefficienti["sconto_trattativa"] = 1 - usc["sconto_trattativa_pct"]
     p.coefficienti_applicati = {k: round(float(v), 4) for k, v in coefficienti.items()}
     p.valore_mercato_lordo = valore_lordo
-    p.prezzo_uscita = valore_lordo * fattore * (1 - usc["sconto_trattativa_pct"])
+
+    # Due letture indipendenti del prezzo di rivendita, tenute entrambe visibili.
+    # 1) Regola commerciale: si rivende a uno sconto fisso sul valore scritto nel file.
+    # 2) Stima di mercato: comparabili al mq rettificati per le caratteristiche.
+    p.prezzo_uscita_da_file = prezzo_base * (1 - usc["sconto_su_valore_file_pct"])
+    if usc.get("applica_rettifiche_al_metodo_file"):
+        # Opzionale: anche la regola commerciale sconta occupazione e stato di fatto
+        p.prezzo_uscita_da_file *= fattore
+    p.prezzo_uscita_da_mercato = valore_lordo * fattore * (1 - usc["sconto_trattativa_pct"])
+
+    metodo = usc.get("metodo", "file")
+    if metodo == "mercato" or p.prezzo_uscita_da_file <= 0:
+        p.prezzo_uscita = p.prezzo_uscita_da_mercato
+        p.metodo_uscita = "mercato"
+    elif metodo == "prudenziale":
+        p.prezzo_uscita = min(p.prezzo_uscita_da_file, p.prezzo_uscita_da_mercato)
+        p.metodo_uscita = "prudenziale"
+    else:
+        p.prezzo_uscita = p.prezzo_uscita_da_file
+        p.metodo_uscita = "file"
 
     p.commissione_vendita = p.prezzo_uscita * usc["commissione_agenzia_vendita_pct"]
     p.costi_uscita = usc["spese_marketing_fisse"] + usc["ape_e_pratiche_fisse"]
 
-    # Controllo di coerenza: la stima a mq e il valore dichiarato nel file devono
-    # essere dello stesso ordine di grandezza. Se non lo sono, uno dei due e' sbagliato.
-    if prezzo_base > 0 and p.prezzo_uscita > 0:
-        scostamento = p.prezzo_uscita / prezzo_base
-        if scostamento >= 3.0:
+    # Le due letture devono essere dello stesso ordine di grandezza: se divergono
+    # molto, o il valore del file e' fuori mercato o la stima a mq va verificata.
+    if p.prezzo_uscita_da_file > 0 and p.prezzo_uscita_da_mercato > 0:
+        divario = p.prezzo_uscita_da_mercato / p.prezzo_uscita_da_file
+        if divario >= 1.6:
             p.warning.append(
-                f"Stima di uscita pari a {scostamento:.1f}x il valore a base d'asta: "
-                "verificare superficie, destinazione e comparabili prima di offrire."
+                f"I comparabili di zona valgono {divario:.1f}x il prezzo di rivendita "
+                f"da regola commerciale ({euro_it(p.prezzo_uscita_da_mercato)} contro "
+                f"{euro_it(p.prezzo_uscita_da_file)}): potrebbe esserci piu' margine di quanto stimato."
             )
-        elif scostamento <= 0.5:
+        elif divario <= 0.65:
             p.warning.append(
-                f"Stima di uscita pari a {scostamento:.0%} del valore a base d'asta: "
-                "il prezzo del file sembra fuori mercato per la zona."
+                f"I comparabili di zona valgono solo {divario:.0%} del prezzo di rivendita "
+                f"da regola commerciale ({euro_it(p.prezzo_uscita_da_mercato)} contro "
+                f"{euro_it(p.prezzo_uscita_da_file)}): il valore del file sembra fuori mercato."
             )
     for nota in comp.note:
         p.warning.append(nota)

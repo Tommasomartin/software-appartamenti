@@ -229,7 +229,16 @@ def test_tenere_di_piu_costa_di_piu(ipotesi):
     assert lungo.utile < breve.utile
 
 
-def test_immobile_occupato_vale_meno_in_uscita(ipotesi):
+def test_immobile_occupato_vale_meno_nella_stima_di_mercato(ipotesi):
+    """La regola 'valore file meno 30%' e' piatta; la stima di mercato invece sconta."""
+    libero = valutazione.calcola(immobile(stato_occupazione="libero"), ipotesi, 12)
+    occupato = valutazione.calcola(immobile(stato_occupazione="occupato"), ipotesi, 12)
+    assert occupato.prezzo_uscita_da_mercato < libero.prezzo_uscita_da_mercato
+    assert occupato.prezzo_uscita == pytest.approx(libero.prezzo_uscita)
+
+
+def test_rettifiche_opzionali_sul_metodo_file(ipotesi):
+    ipotesi["uscita"]["applica_rettifiche_al_metodo_file"] = True
     libero = valutazione.calcola(immobile(stato_occupazione="libero"), ipotesi, 12)
     occupato = valutazione.calcola(immobile(stato_occupazione="occupato"), ipotesi, 12)
     assert occupato.prezzo_uscita < libero.prezzo_uscita
@@ -267,8 +276,27 @@ def test_locazione_riduce_il_costo_di_mantenimento(ipotesi):
 
 def test_affare_ottimo_e_verde(ipotesi):
     p = valutazione.calcola(immobile(fab=1, prezzo_base=900_000, superficie_mq=200), ipotesi, 12)
-    assert p.multiplo > 2
+    assert p.multiplo > 1.30
     assert p.semaforo == "verde"
+
+
+def test_multiplo_non_puo_superare_il_tetto_strutturale(ipotesi):
+    """Esborso 40% del valore file, rivendita 70%: il tetto assoluto e' 1,75x."""
+    for fab in range(1, 11):
+        p = valutazione.calcola(immobile(fab=fab, prezzo_base=400_000), ipotesi, 12)
+        assert p.multiplo <= 1.75
+
+
+def test_fab_alto_e_strutturalmente_in_perdita(ipotesi):
+    """Con FAB 8 si esborsa il 70% + 10% e si rivende al 70%: non puo' funzionare."""
+    p = valutazione.calcola(immobile(fab=8, prezzo_base=400_000), ipotesi, 12)
+    assert p.utile < 0
+    assert p.semaforo == "rosso"
+
+
+def test_le_soglie_sono_raggiungibili(ipotesi):
+    """Una soglia verde sopra il tetto strutturale renderebbe il semaforo inutile."""
+    assert ipotesi["soglie_semaforo"]["verde"]["multiplo_min"] < 1.75
 
 
 def test_operazione_in_perdita_e_rossa(ipotesi):
@@ -342,3 +370,94 @@ def test_intestazione_sotto_le_righe_di_titolo():
     assert "prezzo_base" in riconosciute
     assert "superficie_mq" in riconosciute
     assert "fab_raw" in riconosciute
+
+
+# ---------------------------------------------------- intermediazione 10%
+
+def test_intermediazione_si_somma_alla_percentuale_fab(ipotesi):
+    """FAB 1 al 30% con intermediazione al 10% => esborso del 40% del valore del file."""
+    p = valutazione.calcola(immobile(fab=1, prezzo_base=200_000), ipotesi, 12)
+    assert p.prezzo_acquisto == pytest.approx(60_000)
+    assert p.intermediazione == pytest.approx(20_000)
+    assert p.percentuale_esborso_totale == pytest.approx(0.40)
+
+
+def test_intermediazione_calcolata_sul_valore_del_file_non_sullo_scontato(ipotesi):
+    """Cambiando il FAB l'intermediazione non cambia: dipende solo dal valore del file."""
+    uno = valutazione.calcola(immobile(fab=1, prezzo_base=500_000), ipotesi, 12)
+    dieci = valutazione.calcola(immobile(fab=10, prezzo_base=500_000), ipotesi, 12)
+    assert uno.intermediazione == pytest.approx(dieci.intermediazione) == pytest.approx(50_000)
+    assert uno.prezzo_acquisto < dieci.prezzo_acquisto
+
+
+def test_intermediazione_entra_nella_cassa_iniziale(ipotesi):
+    p = valutazione.calcola(immobile(prezzo_base=200_000), ipotesi, 12)
+    assert p.intermediazione > 0
+    assert p.totale_costi_acquisto > p.intermediazione
+    assert p.cassa_iniziale == pytest.approx(
+        p.prezzo_acquisto + p.totale_costi_acquisto + p.capex_ristrutturazione
+    )
+
+
+def test_intermediazione_azzerabile(ipotesi):
+    ipotesi["acquisto"]["intermediazione_pct"] = 0.0
+    p = valutazione.calcola(immobile(prezzo_base=200_000), ipotesi, 12)
+    assert p.intermediazione == 0
+    assert p.percentuale_esborso_totale == pytest.approx(p.percentuale_acquisto)
+
+
+# ------------------------------------------------- rivendita sul valore file
+
+def test_rivendita_e_il_valore_del_file_meno_lo_sconto(ipotesi):
+    """200.000 EUR nel file, sconto del 30% => si rivende a 140.000 EUR."""
+    p = valutazione.calcola(immobile(prezzo_base=200_000), ipotesi, 12)
+    assert p.metodo_uscita == "file"
+    assert p.prezzo_uscita == pytest.approx(140_000)
+    assert p.prezzo_uscita_da_file == pytest.approx(140_000)
+
+
+def test_le_due_letture_restano_entrambe_visibili(ipotesi):
+    p = valutazione.calcola(immobile(prezzo_base=200_000), ipotesi, 12)
+    assert p.prezzo_uscita_da_file > 0
+    assert p.prezzo_uscita_da_mercato > 0
+    assert p.prezzo_uscita_da_file != p.prezzo_uscita_da_mercato
+
+
+def test_metodo_mercato_usa_i_comparabili(ipotesi):
+    ipotesi["uscita"]["metodo"] = "mercato"
+    p = valutazione.calcola(immobile(prezzo_base=200_000), ipotesi, 12)
+    assert p.metodo_uscita == "mercato"
+    assert p.prezzo_uscita == pytest.approx(p.prezzo_uscita_da_mercato)
+
+
+def test_metodo_prudenziale_prende_il_minore(ipotesi):
+    ipotesi["uscita"]["metodo"] = "prudenziale"
+    p = valutazione.calcola(immobile(prezzo_base=200_000), ipotesi, 12)
+    assert p.prezzo_uscita == pytest.approx(
+        min(p.prezzo_uscita_da_file, p.prezzo_uscita_da_mercato)
+    )
+
+
+def test_sconto_di_rivendita_configurabile(ipotesi):
+    ipotesi["uscita"]["sconto_su_valore_file_pct"] = 0.20
+    p = valutazione.calcola(immobile(prezzo_base=200_000), ipotesi, 12)
+    assert p.prezzo_uscita == pytest.approx(160_000)
+
+
+def test_divario_fra_le_due_letture_viene_segnalato(ipotesi):
+    """Un immobile grande in zona di pregio: i comparabili superano di molto la regola."""
+    p = valutazione.calcola(
+        immobile(prezzo_base=100_000, superficie_mq=300, comune="Milano", provincia="MI"),
+        ipotesi, 12,
+    )
+    assert any("comparabili di zona" in w for w in p.warning)
+
+
+def test_esborso_totale_e_rivendita_determinano_il_margine(ipotesi):
+    """Con esborso al 40% e rivendita al 70% il margine lordo e' il 30% del valore file."""
+    valore = 200_000.0
+    p = valutazione.calcola(immobile(prezzo_base=valore, superficie_mq=100), ipotesi, 12)
+    margine_lordo = p.prezzo_uscita - (p.prezzo_acquisto + p.intermediazione)
+    assert margine_lordo == pytest.approx(valore * 0.30)
+    # I costi accessori e la gestione erodono quel margine
+    assert p.utile < margine_lordo

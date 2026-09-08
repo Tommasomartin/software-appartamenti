@@ -37,9 +37,16 @@ def notaio(prezzo: float, ipotesi: dict) -> float:
     return onorario * (1 + acq["notaio_iva_pct"]) + acq["notaio_spese_accessorie"]
 
 
-def costi_acquisto(prezzo_acquisto: float, ipotesi: dict) -> dict[str, float]:
-    """Imposta di registro (acquisto da fondo), imposte fisse, notaio, agenzia, due diligence."""
+def costi_acquisto(prezzo_acquisto: float, ipotesi: dict,
+                   prezzo_base: float = 0.0) -> dict[str, float]:
+    """Imposta di registro, imposte fisse, notaio, agenzia, due diligence, intermediazione.
+
+    L'intermediazione si calcola sul VALORE A BASE D'ASTA (``prezzo_base``), non sul
+    prezzo gia' scontato: si somma alla percentuale FAB. Un FAB 1 al 30% con
+    intermediazione al 10% comporta un esborso totale del 40% del valore del file.
+    """
     acq = ipotesi["acquisto"]
+    intermediazione = float(prezzo_base or prezzo_acquisto) * acq.get("intermediazione_pct", 0.0)
     registro = max(prezzo_acquisto * acq["imposta_registro_pct"], acq["imposta_registro_minima"])
     fisse = acq["imposta_ipotecaria_fissa"] + acq["imposta_catastale_fissa"]
     parcella_notaio = notaio(prezzo_acquisto, ipotesi)
@@ -49,12 +56,13 @@ def costi_acquisto(prezzo_acquisto: float, ipotesi: dict) -> dict[str, float]:
     )
     altri = acq["due_diligence_fissa"] + acq["perizia_fissa"] + acq["visure_volture_fissa"]
     return {
+        "intermediazione": intermediazione,
         "imposta_registro": registro,
         "imposte_fisse": fisse,
         "notaio": parcella_notaio,
         "commissione_acquisto": agenzia,
         "altri_costi_acquisto": altri,
-        "totale": registro + fisse + parcella_notaio + agenzia + altri,
+        "totale": intermediazione + registro + fisse + parcella_notaio + agenzia + altri,
     }
 
 
