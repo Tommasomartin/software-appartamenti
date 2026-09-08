@@ -7,6 +7,16 @@ semaforo delle opportunità.
 
 ---
 
+## Due versioni
+
+**Pagina web, senza installare niente** — <https://claude.ai/code/artifact/341a1975-7704-4cd7-aa32-782c749dda64>
+Apri, carichi un Excel o un CSV e vedi il prospetto. Gira tutta nel browser: i tuoi file non
+escono dal computer. Il file è in `artifact/prospetto-lotti-fab.html`, apribile anche in locale
+con un doppio clic.
+
+**Applicazione locale** — questo repository. Aggiunge la lettura dei PDF, l'archivio dei pool
+caricati, l'esportazione in Excel e l'import delle quotazioni OMI ufficiali.
+
 ## Avvio in 30 secondi
 
 ```bash
@@ -192,9 +202,12 @@ app/
     geo.py             link Maps / Earth / OMI
   data/                dataset di riferimento (JSON, modificabili)
   static/              dashboard (HTML, CSS, JS - nessun build)
+artifact/
+  prospetto-lotti-fab.html   la stessa dashboard in un file solo, senza server
 scripts/
   genera_esempio.py    crea un pool di prova
   importa_omi.py       importa le quotazioni OMI ufficiali
+  genera_dati_web.py   riallinea i dati incorporati nella pagina web
 tests/                 79 test su motore e API
 ```
 
