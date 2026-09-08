@@ -1,0 +1,62 @@
+{
+  "_meta": {
+    "descrizione": "Ipotesi economiche di default. Tutti i valori sono modificabili dalla dashboard (pannello Ipotesi) e salvati nel database.",
+    "versione": 1
+  },
+
+  "fab": {
+    "_nota": "Percentuale del prezzo a base d'asta che effettivamente paghiamo. FAB basso = piu' sconto (paghiamo meno). FAB alto = meno sconto.",
+    "scala": {
+      "1": 0.30, "2": 0.30, "3": 0.35, "4": 0.40, "5": 0.45,
+      "6": 0.50, "7": 0.55, "8": 0.60, "9": 0.65, "10": 0.70
+    },
+    "percentuale_se_fab_assente": 0.50
+  },
+
+  "acquisto": {
+    "imposta_registro_pct": 0.02,
+    "imposta_registro_minima": 1000.0,
+    "imposta_ipotecaria_fissa": 50.0,
+    "imposta_catastale_fissa": 50.0,
+    "commissione_agenzia_acquisto_pct": 0.02,
+    "commissione_agenzia_acquisto_minima": 0.0,
+    "due_diligence_fissa": 800.0,
+    "perizia_fissa": 500.0,
+    "visure_volture_fissa": 350.0,
+    "notaio_scaglioni": [
+      [100000, 2200], [200000, 2800], [350000, 3400],
+      [500000, 4100], [1000000, 5200], [2000000, 7500]
+    ],
+    "notaio_pct_oltre_ultimo_scaglione": 0.0045,
+    "notaio_iva_pct": 0.22,
+    "notaio_spese_accessorie": 400.0
+  },
+
+  "mantenimento": {
+    "_nota": "Costi ricorrenti. I valori per mq/anno arrivano da imu_oneri.json calibrati per zona e tipologia.",
+    "applica_tari_se_libero": false,
+    "gestione_pct_su_canone": 0.08,
+    "sfitto_pct_su_canone": 0.05,
+    "costo_capitale_annuo_pct": 0.0,
+    "orizzonti_mesi": [3, 6, 12],
+    "orizzonte_default_mesi": 12
+  },
+
+  "uscita": {
+    "commissione_agenzia_vendita_pct": 0.02,
+    "sconto_trattativa_pct": 0.05,
+    "spese_marketing_fisse": 600.0,
+    "ape_e_pratiche_fisse": 450.0,
+    "applica_tassazione_plusvalenza": false,
+    "aliquota_plusvalenza_pct": 0.26
+  },
+
+  "soglie_semaforo": {
+    "_nota": "Un immobile e' VERDE se supera tutte le soglie verdi; ROSSO se sotto una qualsiasi soglia rossa; altrimenti GIALLO.",
+    "verde": { "multiplo_min": 2.0, "roi_min": 0.60, "utile_min": 30000 },
+    "giallo": { "multiplo_min": 1.35, "roi_min": 0.25, "utile_min": 8000 },
+    "penalita_confidenza_bassa": true
+  },
+
+  "orizzonte_mesi": 12
+}

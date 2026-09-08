@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prospetto Immobili</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏢</text></svg>">
+</head>
+<body>
+
+<div class="barra">
+  <div class="marchio">Prospetto <span>Immobili</span></div>
+
+  <input type="file" id="input-file" class="nascosto" accept=".xlsx,.xlsm,.xls,.xltx,.csv,.tsv,.txt,.pdf">
+  <button class="bottone primario" id="btn-carica">Carica file pool</button>
+
+  <label class="campo">Portafoglio
+    <select id="sel-portafoglio"><option value="">Tutti</option></select>
+  </label>
+
+  <label class="campo">Orizzonte detenzione
+    <select id="sel-orizzonte">
+      <option value="3">3 mesi</option>
+      <option value="6">6 mesi</option>
+      <option value="12" selected>12 mesi</option>
+      <option value="18">18 mesi</option>
+      <option value="24">24 mesi</option>
+      <option value="36">36 mesi</option>
+    </select>
+  </label>
+
+  <div class="spazio"></div>
+  <button class="bottone" id="btn-ipotesi">Ipotesi</button>
+  <button class="bottone" id="btn-fonti">Fonti dati</button>
+  <button class="bottone" id="btn-esporta">Esporta Excel</button>
+</div>
+
+<div id="kpi" class="kpi-riga"></div>
+
+<div class="filtri">
+  <label class="campo">Cerca
+    <input type="search" id="f-testo" placeholder="lotto, comune, indirizzo...">
+  </label>
+  <label class="campo">Tipologia <select id="f-tipologia"><option value="">Tutte</option></select></label>
+  <label class="campo">Provincia <select id="f-provincia"><option value="">Tutte</option></select></label>
+  <label class="campo">Occupazione <select id="f-occupazione"><option value="">Tutte</option></select></label>
+  <label class="campo">Conservazione <select id="f-conservazione"><option value="">Tutte</option></select></label>
+  <label class="campo">Multiplo minimo <input type="number" id="f-multiplo" step="0.1" min="0" style="width:96px" placeholder="0"></label>
+  <div class="spazio"></div>
+  <button class="bottone piccolo" id="btn-azzera-filtri">Azzera filtri</button>
+</div>
+
+<div class="contenitore-tabella">
+  <table id="tabella">
+    <thead><tr id="intestazioni"></tr></thead>
+    <tbody id="corpo"></tbody>
+  </table>
+  <div id="vuoto" class="vuoto nascosto"></div>
+</div>
+
+<div id="velo" class="velo nascosto"></div>
+<aside id="cassetto" class="cassetto nascosto"></aside>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
