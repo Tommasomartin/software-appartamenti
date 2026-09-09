@@ -1,0 +1,1526 @@
+<title>Valutazione Immobili FAB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+/* ---------- tokens ---------- */
+:root{
+  --bg:#f2f5f4; --surface:#ffffff; --surface-2:#e9eeee; --surface-3:#dde5e5;
+  --ink:#101718; --ink-2:#3f5257; --ink-3:#71868c;
+  --line:#d3dcdc; --line-2:#b6c4c5;
+  --accent:#0f5c63; --accent-2:#0b464c; --accent-soft:#dfeced; --on-accent:#ffffff;
+  --pos:#1f6b45; --pos-bg:#e4f1e9; --pos-line:#9dc9b1;
+  --warn:#8a5a06; --warn-bg:#f9efd6; --warn-line:#dfc79a;
+  --neg:#9d2620; --neg-bg:#fae7e5; --neg-line:#e0adaa;
+  --none:#647a80; --none-bg:#edf1f1; --none-line:#c3cfd0;
+  --shadow:0 1px 2px rgba(16,23,24,.06), 0 8px 24px rgba(16,23,24,.06);
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --ui:"Archivo",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1315; --surface:#141c1e; --surface-2:#1b2528; --surface-3:#243033;
+    --ink:#e8eeee; --ink-2:#a8b9bd; --ink-3:#7b8f95;
+    --line:#27353a; --line-2:#3a4d53;
+    --accent:#4fb3bd; --accent-2:#79cdd5; --accent-soft:#10333a; --on-accent:#07191c;
+    --pos:#63d29b; --pos-bg:#0f2a20; --pos-line:#2f6b50;
+    --warn:#e2b35c; --warn-bg:#2b2113; --warn-line:#6d5622;
+    --neg:#f0857b; --neg-bg:#2d1614; --neg-line:#743833;
+    --none:#8ba0a6; --none-bg:#1a2326; --none-line:#38484c;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1315; --surface:#141c1e; --surface-2:#1b2528; --surface-3:#243033;
+  --ink:#e8eeee; --ink-2:#a8b9bd; --ink-3:#7b8f95;
+  --line:#27353a; --line-2:#3a4d53;
+  --accent:#4fb3bd; --accent-2:#79cdd5; --accent-soft:#10333a; --on-accent:#07191c;
+  --pos:#63d29b; --pos-bg:#0f2a20; --pos-line:#2f6b50;
+  --warn:#e2b35c; --warn-bg:#2b2113; --warn-line:#6d5622;
+  --neg:#f0857b; --neg-bg:#2d1614; --neg-line:#743833;
+  --none:#8ba0a6; --none-bg:#1a2326; --none-line:#38484c;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--ui); font-size:14px; line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent); text-decoration:none}
+a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:3px}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* ---------- top bar ---------- */
+.top{
+  display:flex; flex-wrap:wrap; gap:16px; align-items:flex-end; justify-content:space-between;
+  padding:18px 22px 16px; background:var(--surface);
+  border-bottom:1px solid var(--line);
+  position:sticky; top:0; z-index:40;
+}
+.eyebrow{
+  display:block; font-size:10.5px; font-weight:600; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-3); margin-bottom:3px;
+}
+.top h1{
+  font-family:var(--serif); font-weight:600; font-size:27px; line-height:1.05;
+  margin:0; letter-spacing:-.01em;
+}
+.top h1 em{font-style:normal; color:var(--accent)}
+.top-actions{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+
+.btn{
+  display:inline-flex; align-items:center; gap:7px; cursor:pointer;
+  padding:8px 13px; border-radius:6px; border:1px solid var(--line-2);
+  background:var(--surface); color:var(--ink); font-size:13px; font-weight:500;
+  white-space:nowrap; transition:background .12s, border-color .12s;
+}
+.btn:hover{background:var(--surface-2); border-color:var(--ink-3)}
+.btn-primary{background:var(--accent); border-color:var(--accent); color:var(--on-accent); font-weight:600}
+.btn-primary:hover{background:var(--accent-2); border-color:var(--accent-2)}
+.btn[disabled]{opacity:.45; cursor:not-allowed}
+.btn svg{width:15px;height:15px;flex:none}
+
+/* ---------- banners ---------- */
+.banner{
+  display:flex; gap:12px; align-items:flex-start;
+  margin:0; padding:11px 22px; font-size:13px;
+  border-bottom:1px solid var(--line);
+}
+.banner strong{font-weight:600}
+.banner.demo{background:var(--warn-bg); color:var(--warn); border-bottom-color:var(--warn-line)}
+.banner.err{background:var(--neg-bg); color:var(--neg); border-bottom-color:var(--neg-line)}
+.banner.ok{background:var(--accent-soft); color:var(--accent-2); border-bottom-color:var(--line)}
+.banner[hidden]{display:none !important}
+
+/* ---------- stats ---------- */
+.stats{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr));
+  background:var(--surface); border-bottom:1px solid var(--line);
+  padding:0 22px;
+}
+.stat{
+  padding:11px 16px 11px 0; border-right:1px solid var(--line);
+  display:flex; flex-direction:column; gap:1px; min-width:0;
+}
+.stat:last-child{border-right:0}
+.stat b{font-family:var(--mono); font-size:19px; font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+.stat span{font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+.stat.g b{color:var(--pos)} .stat.y b{color:var(--warn)} .stat.r b{color:var(--neg)} .stat.n b{color:var(--none)}
+
+/* ---------- controls ---------- */
+.controls{
+  display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center;
+  padding:12px 22px; background:var(--bg);
+  border-bottom:1px solid var(--line); position:sticky; top:0; z-index:30;
+}
+.seg{display:flex; border:1px solid var(--line-2); border-radius:6px; overflow:hidden; background:var(--surface)}
+.seg button{
+  border:0; background:transparent; padding:7px 12px; cursor:pointer; font-size:12.5px; font-weight:500;
+  border-right:1px solid var(--line); color:var(--ink-2);
+}
+.seg button:last-child{border-right:0}
+.seg button:hover{background:var(--surface-2)}
+.seg button[aria-pressed="true"]{background:var(--accent); color:var(--on-accent); font-weight:600}
+.seg button .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.seg button[aria-pressed="true"] .dot{box-shadow:0 0 0 1.5px rgba(255,255,255,.7)}
+.dot.g{background:var(--pos)} .dot.y{background:var(--warn)} .dot.r{background:var(--neg)} .dot.n{background:var(--none)}
+
+.field{display:flex; align-items:center; gap:6px}
+.field label{font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); font-weight:600}
+select,.txt{
+  background:var(--surface); border:1px solid var(--line-2); border-radius:6px;
+  padding:7px 9px; font-size:12.5px; color:var(--ink); min-width:0;
+}
+.txt{min-width:210px}
+.spacer{flex:1 1 auto}
+.chk{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);cursor:pointer}
+
+/* ---------- table ---------- */
+.tablewrap{overflow-x:auto; background:var(--surface); border-bottom:1px solid var(--line)}
+table{border-collapse:separate; border-spacing:0; width:100%; min-width:1360px}
+thead th{
+  position:sticky; top:0; z-index:20; background:var(--surface-2);
+  text-align:left; font-size:10px; letter-spacing:.075em; text-transform:uppercase;
+  font-weight:700; color:var(--ink-2); padding:9px 10px; white-space:nowrap;
+  border-bottom:1px solid var(--line-2); cursor:pointer; user-select:none;
+}
+thead th:hover{color:var(--accent)}
+thead th .ar{opacity:.35; margin-left:4px}
+thead th[aria-sort] .ar{opacity:1; color:var(--accent)}
+thead th.num, td.num{text-align:right}
+tbody td{
+  padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top; font-size:13px;
+}
+tbody tr.row{cursor:pointer}
+tbody tr.row:hover td{background:rgba(15,92,99,.045)}
+:root[data-theme="dark"] tbody tr.row:hover td{background:rgba(79,179,189,.07)}
+td.money,td.mq,td.mult{font-family:var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap}
+td.mult{font-weight:600; font-size:14px}
+
+/* severity: tinge the whole row + left stripe */
+tr.row.g td{background:var(--pos-bg)}
+tr.row.y td{background:var(--warn-bg)}
+tr.row.r td{background:var(--neg-bg)}
+tr.row.n td{background:var(--none-bg)}
+tr.row td:first-child{border-left:4px solid transparent}
+tr.row.g td:first-child{border-left-color:var(--pos)}
+tr.row.y td:first-child{border-left-color:var(--warn)}
+tr.row.r td:first-child{border-left-color:var(--neg)}
+tr.row.n td:first-child{border-left-color:var(--none-line)}
+tr.row.g td.mult{color:var(--pos)} tr.row.y td.mult{color:var(--warn)} tr.row.r td.mult{color:var(--neg)}
+
+.fab{font-family:var(--mono); font-weight:600; font-size:12.5px; white-space:nowrap}
+.chev{display:inline-block; width:9px; color:var(--ink-3); transition:transform .15s; margin-right:3px}
+tr.open .chev{transform:rotate(90deg)}
+
+.loc-a{display:block; font-weight:600; color:var(--ink)}
+.loc-a:hover{color:var(--accent)}
+.loc-b{display:block; color:var(--ink-2); font-size:12px}
+.cat{font-family:var(--mono); font-size:11px; color:var(--ink-3)}
+.maplinks{display:inline-flex; gap:6px; margin-top:3px}
+.maplinks a{
+  font-size:10px; letter-spacing:.05em; text-transform:uppercase; font-weight:600;
+  border:1px solid var(--line-2); border-radius:4px; padding:1px 5px; color:var(--ink-2); background:var(--surface);
+}
+.maplinks a:hover{border-color:var(--accent); color:var(--accent); text-decoration:none}
+
+.pill{
+  display:inline-block; font-size:11px; font-weight:600; padding:2px 7px; border-radius:11px;
+  border:1px solid var(--line-2); background:var(--surface); white-space:nowrap;
+}
+.pill.dim{color:var(--ink-3)}
+.rel{font-size:11.5px; font-weight:600; line-height:1.25; display:block}
+.rel.a{color:var(--pos)} .rel.b{color:var(--warn)} .rel.c{color:var(--neg)} .rel.d{color:var(--none)}
+.relsub{font-size:10.5px; color:var(--ink-3); display:block; margin-top:1px}
+
+.na{
+  color:var(--ink-3); font-size:11.5px; font-weight:600; line-height:1.25; font-family:var(--ui);
+  display:block; white-space:normal; max-width:200px; margin-left:auto;
+}
+.sub{
+  display:block; font-size:10.5px; color:var(--ink-3); font-family:var(--ui); font-weight:400;
+  margin-top:2px; white-space:normal; max-width:200px; margin-left:auto;
+}
+td:not(.num) .na, td:not(.num) .sub{margin-left:0}
+.src{
+  display:inline-block; font-family:var(--mono); font-size:9px; font-weight:600;
+  width:13px; height:13px; line-height:12px; text-align:center; border-radius:3px;
+  border:1px solid var(--line-2); color:var(--ink-3); background:var(--surface); margin-left:4px; vertical-align:1px;
+}
+.src.F{color:var(--accent); border-color:var(--accent)}
+.src.C{color:var(--ink-2)}
+.src.E{color:var(--warn); border-color:var(--warn-line)}
+.src.S{color:var(--neg); border-color:var(--neg-line)}
+.flagmark{color:var(--neg); font-weight:700; margin-left:3px; cursor:help}
+
+/* ---------- detail ---------- */
+tr.detailrow>td{padding:0; background:var(--surface-3) !important; border-bottom:2px solid var(--line-2)}
+.detail{display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:0}
+.dsec{padding:14px 16px; border-right:1px solid var(--line); border-bottom:1px solid var(--line)}
+.dsec h4{
+  margin:0 0 8px; font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-3); font-weight:700;
+}
+.dl{display:grid; grid-template-columns:auto 1fr; gap:3px 12px; font-size:12px}
+.dl dt{color:var(--ink-3)}
+.dl dd{margin:0; font-family:var(--mono); font-size:11.5px; word-break:break-word}
+.notelist{margin:0; padding-left:16px; font-size:12px; color:var(--ink-2)}
+.notelist li{margin-bottom:4px}
+.notelist li.bad{color:var(--neg)}
+.notelist li.warn{color:var(--warn)}
+.linkgrid{display:flex; flex-wrap:wrap; gap:6px}
+.linkgrid a{
+  font-size:11.5px; font-weight:500; border:1px solid var(--line-2); border-radius:5px;
+  padding:5px 9px; background:var(--surface); color:var(--ink-2);
+}
+.linkgrid a:hover{border-color:var(--accent); color:var(--accent); text-decoration:none}
+.form-row{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px; align-items:center}
+.form-row input,.form-row select{
+  background:var(--surface); border:1px solid var(--line-2); border-radius:5px; padding:6px 8px; font-size:12px;
+}
+.form-row input[type=number]{width:104px; font-family:var(--mono)}
+.form-row input.wide{flex:1 1 150px; min-width:120px}
+.hint{font-size:11px; color:var(--ink-3); margin:6px 0 0; line-height:1.4}
+
+/* ---------- pager / footer ---------- */
+.pager{display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding:12px 22px; font-size:12.5px; color:var(--ink-2)}
+.pager .btn{padding:5px 10px; font-size:12px}
+footer{padding:18px 22px 40px; color:var(--ink-3); font-size:11.5px; line-height:1.6; border-top:1px solid var(--line)}
+footer .legend{display:flex; flex-wrap:wrap; gap:16px; margin-bottom:10px}
+footer .legend span{display:flex; align-items:center; gap:5px}
+footer b{color:var(--ink-2)}
+
+/* ---------- dialog ---------- */
+dialog{
+  border:1px solid var(--line-2); border-radius:10px; background:var(--surface); color:var(--ink);
+  padding:0; max-width:780px; width:calc(100% - 32px); box-shadow:var(--shadow);
+}
+dialog::backdrop{background:rgba(8,14,15,.5)}
+.dlg-head{display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--line)}
+.dlg-head h3{margin:0; font-family:var(--serif); font-weight:600; font-size:19px}
+.dlg-body{padding:18px 20px; max-height:70vh; overflow:auto}
+.dlg-body h4{margin:20px 0 8px; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3)}
+.dlg-body h4:first-child{margin-top:0}
+.dlg-body p{margin:0 0 10px; font-size:12.5px; color:var(--ink-2); line-height:1.5; max-width:66ch}
+code{font-family:var(--mono); font-size:11px; background:var(--surface-2); padding:1px 5px; border-radius:3px; border:1px solid var(--line)}
+pre{
+  font-family:var(--mono); font-size:11px; background:var(--surface-2); border:1px solid var(--line);
+  border-radius:6px; padding:10px 12px; overflow-x:auto; margin:0 0 10px;
+}
+.kv{display:flex; gap:10px; align-items:center; margin-bottom:8px; flex-wrap:wrap}
+.kv label{font-size:12.5px; color:var(--ink-2); min-width:250px}
+.kv input{background:var(--surface); border:1px solid var(--line-2); border-radius:5px; padding:6px 8px; width:88px; font-family:var(--mono); font-size:12px; text-align:right}
+
+@media (max-width:760px){
+  .top h1{font-size:22px}
+  .stat{padding-right:18px; margin-right:18px}
+  .txt{min-width:140px}
+}
+@media (prefers-reduced-motion:reduce){ *{transition:none !important; animation:none !important} }
+</style>
+
+<header class="top">
+  <div>
+    <span class="eyebrow">Portafoglio fondi bancari &middot; analisi di acquisto</span>
+    <h1>Valutazione Immobili <em>FAB</em></h1>
+  </div>
+  <div class="top-actions">
+    <label class="btn btn-primary" for="file">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5-5 5 5"/><path d="M12 5v12"/></svg>
+      Carica file Excel
+    </label>
+    <input type="file" id="file" accept=".xlsx,.xlsm,.xls,.csv" hidden>
+    <select id="sheetSel" class="btn" style="display:none" title="Foglio del file"></select>
+    <button class="btn" id="btnQuot">Quotazioni &amp; IMU</button>
+    <button class="btn" id="btnCfg">Parametri</button>
+    <button class="btn" id="btnExport">Esporta CSV</button>
+  </div>
+</header>
+
+<div class="banner demo" id="banner">
+  <span>&#9888;</span>
+  <div><strong>Dati di esempio.</strong> Le tre righe sotto sono fittizie e servono solo a mostrare la struttura della tabella. Carichi il file Excel per sostituirle con gli immobili reali.</div>
+</div>
+
+<section class="stats" id="stats"></section>
+
+<section class="controls">
+  <div class="seg" id="segColore" role="group" aria-label="Filtro colore">
+    <button data-c="all" aria-pressed="true">Tutti</button>
+    <button data-c="g" aria-pressed="false"><span class="dot g"></span>Verdi</button>
+    <button data-c="y" aria-pressed="false"><span class="dot y"></span>Gialli</button>
+    <button data-c="r" aria-pressed="false"><span class="dot r"></span>Rossi</button>
+    <button data-c="n" aria-pressed="false"><span class="dot n"></span>Non valutabili</button>
+  </div>
+  <input type="search" class="txt" id="q" placeholder="Cerca comune, indirizzo, banca, catastale&hellip;" aria-label="Ricerca libera">
+  <div class="field"><label for="fFab">FAB</label><select id="fFab"></select></div>
+  <div class="field"><label for="fReg">Regione</label><select id="fReg"></select></div>
+  <div class="field"><label for="fDest">Destinazione</label><select id="fDest"></select></div>
+  <label class="chk"><input type="checkbox" id="fAnom"> Solo con anomalie</label>
+  <div class="spacer"></div>
+  <div class="field"><label for="perPage">Righe</label>
+    <select id="perPage"><option>50</option><option selected>100</option><option>250</option><option value="0">Tutte</option></select>
+  </div>
+</section>
+
+<div class="tablewrap">
+  <table id="tbl">
+    <thead><tr id="thr"></tr></thead>
+    <tbody id="tb"></tbody>
+  </table>
+</div>
+
+<div class="pager" id="pager"></div>
+
+<footer>
+  <div class="legend">
+    <span><i class="src F">F</i> dato originale del file</span>
+    <span><i class="src E">E</i> dato da fonte esterna (inserita/importata)</span>
+    <span><i class="src C">C</i> calcolo del programma</span>
+    <span><i class="src S">S</i> stima del programma</span>
+    <span><b class="flagmark">&#9888;</b> anomalia rilevata</span>
+  </div>
+  <div>
+    Il programma non genera prezzi, superfici, indirizzi, &euro;/m&sup2;, aliquote o comparabili in assenza del dato.
+    Dove il dato manca, la cella riporta il motivo. Le percentuali applicate (sconto d'acquisto, provvigione, eventuale
+    abbattimento sulle quotazioni da annunci) sono parametri dichiarati, modificabili in <b>Parametri</b>.
+  </div>
+</footer>
+
+<!-- ============ DIALOGS ============ -->
+<dialog id="dlgCfg">
+  <div class="dlg-head"><h3>Parametri di calcolo</h3><button class="btn" data-close>Chiudi</button></div>
+  <div class="dlg-body">
+    <p>Sono le uniche assunzioni numeriche del programma. Restano visibili e modificabili: nessun valore viene applicato di nascosto.</p>
+    <div class="kv"><label>Sconto sul prezzo del file (ASKING PRICE)</label><input type="number" id="cfgSconto" min="0" max="99" step="1"> <span class="hint" style="margin:0">% &rarr; prezzo di acquisto = asking &times; (100&minus;x)%</span></div>
+    <div class="kv"><label>Provvigione agenzia sulla rivendita</label><input type="number" id="cfgAgenzia" min="0" max="20" step="0.1"> <span class="hint" style="margin:0">%</span></div>
+    <div class="kv"><label>Abbattimento su quotazioni di tipo &laquo;annunci&raquo;</label><input type="number" id="cfgAbb" min="0" max="60" step="1"> <span class="hint" style="margin:0">% &mdash; scarto fra prezzo richiesto e prezzo di realizzo</span></div>
+    <div class="kv"><label>Anzianit&agrave; massima di una quotazione</label><input type="number" id="cfgMesi" min="1" max="120" step="1"> <span class="hint" style="margin:0">mesi &mdash; oltre, l'affidabilit&agrave; viene ridotta</span></div>
+    <h4>Note</h4>
+    <p>L'abbattimento &laquo;annunci&raquo; si applica <em>solo</em> alle quotazioni marcate come provenienti da portali (prezzi richiesti). Le quotazioni OMI e le perizie non vengono abbattute: sono gi&agrave; riferite a valori di compravendita.</p>
+  </div>
+</dialog>
+
+<dialog id="dlgQuot">
+  <div class="dlg-head"><h3>Quotazioni &amp; aliquote IMU</h3><button class="btn" data-close>Chiudi</button></div>
+  <div class="dlg-body">
+    <h4>Stato archivio locale</h4>
+    <p id="kbState"></p>
+    <div class="linkgrid" style="margin-bottom:6px">
+      <label class="btn" for="impQ">Importa quotazioni (CSV)</label><input type="file" id="impQ" accept=".csv,.txt" hidden>
+      <label class="btn" for="impI">Importa aliquote IMU (CSV)</label><input type="file" id="impI" accept=".csv,.txt" hidden>
+      <label class="btn" for="impC">Importa rendite catastali (CSV)</label><input type="file" id="impC" accept=".csv,.txt" hidden>
+      <button class="btn" id="expKb">Esporta archivio (JSON)</button>
+      <label class="btn" for="impKb">Importa archivio (JSON)</label><input type="file" id="impKb" accept=".json" hidden>
+      <button class="btn" id="clrKb">Svuota archivio</button>
+    </div>
+
+    <h4>Quotazioni &mdash; formato CSV</h4>
+    <p>Separatore <code>;</code> o <code>,</code>. Intestazione obbligatoria. Una riga per combinazione comune + destinazione (+ zona).</p>
+    <pre>comune;provincia;zona;destinazione;eur_mq_min;eur_mq_max;tipo;fonte;url;data;comparabili
+Romano di Lombardia;BG;centro;uffici;750;1050;omi;OMI 1&deg; sem. 2026;https://...;2026-06-30;
+Stradella;PV;;residenziale;820;1150;annunci;Immobiliare.it 12 annunci;https://...;2026-09-05;12</pre>
+    <p><code>tipo</code>: <code>omi</code> &middot; <code>annunci</code> &middot; <code>perizia</code> &middot; <code>manuale</code>.
+    <code>destinazione</code>: residenziale, commerciale, uffici, produttivo, box, ricettivo, terreno_agricolo, terreno_edificabile.
+    Usare <code>*</code> nella destinazione per applicare la quotazione a tutte le tipologie del comune.</p>
+
+    <h4>Aliquote IMU &mdash; formato CSV</h4>
+    <pre>comune;provincia;tipologia;aliquota_per_mille;fonte;url;anno
+Stradella;PV;ordinaria;10.6;Delibera C.C. n.12/2026;https://...;2026
+Desio;MB;produttivo;10.6;Delibera C.C. n.7/2026;https://...;2026</pre>
+    <p><code>tipologia</code>: <code>ordinaria</code> (fallback) oppure una delle destinazioni. L'aliquota va espressa <b>per mille</b> (es. 10,6).</p>
+
+    <h4>Rendite catastali &mdash; formato CSV</h4>
+    <pre>comune;foglio;particella;subalterno;categoria;rendita
+ROMANO DI LOMBARDIA;14;9470;104;A/10;1240.55</pre>
+    <p>Senza rendita e categoria catastale l'IMU non &egrave; calcolabile: la base imponibile IMU si ottiene da <code>rendita &times; 1,05 &times; moltiplicatore di categoria</code>, e nessuno di questi elementi &egrave; presente nel file di portafoglio.</p>
+  </div>
+</dialog>
+
+<script>
+"use strict";
+
+/* =========================================================================
+   1. COSTANTI E UTILITÀ
+   ========================================================================= */
+
+const DEFAULT_CFG = { sconto:65, agenzia:2, abbattimento:15, mesiValidita:18 };
+let CFG = Object.assign({}, DEFAULT_CFG);
+
+/* Moltiplicatori catastali IMU (art. 13 D.L. 201/2011) */
+const MOLT_CAT = {
+  A:160, A10:80, B:140, C1:55, C2:160, C6:160, C7:160,
+  C3:140, C4:140, C5:140, D:65, D5:80
+};
+
+const DEST_RULES = [
+  ['box',                 /\bbox\b|autorimess|garage|posto\s*auto|cantin/i],
+  ['terreno_edificabile', /edificabil|area\s*fabbric/i],
+  ['terreno_agricolo',    /agricol|semin|bosco|terren/i],
+  ['ricettivo',           /ricettiv|turistic|alberg|hotel|agrituris|b\s*&\s*b/i],
+  ['produttivo',          /logistic|produttiv|capannon|industrial|artigian|magazzin|deposit|opificio/i],
+  ['uffici',              /uffic|direzional|studio\s*prof/i],
+  ['commerciale',         /commercial|negozi|retail|bottega|laborator/i],
+  ['residenziale',        /residenz|appartament|abitaz|civile/i]
+];
+const DEST_LABEL = {
+  residenziale:'Residenziale', commerciale:'Commerciale', uffici:'Uffici',
+  produttivo:'Logistico / produttivo', box:'Box / autorimessa', ricettivo:'Ricettivo / turistico',
+  terreno_agricolo:'Terreno agricolo', terreno_edificabile:'Terreno edificabile',
+  altro:'Altro (non classificato)', sconosciuto:'Non riconosciuta'
+};
+
+const ROMAN = { I:1, V:5, X:10, L:50, C:100, D:500, M:1000 };
+
+const nfInt = new Intl.NumberFormat('it-IT', { maximumFractionDigits:0 });
+const nfMq  = new Intl.NumberFormat('it-IT', { maximumFractionDigits:1 });
+const nfX   = new Intl.NumberFormat('it-IT', { minimumFractionDigits:2, maximumFractionDigits:2 });
+
+const eur = v => '€ ' + nfInt.format(Math.round(v));
+
+/* Salvataggio file: usa la capability del visualizzatore Claude quando c'è,
+   altrimenti il download del browser (versione locale del programma). */
+async function saveFile(filename, blob){
+  let dl = null;
+  try { dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch(e){ dl = null; }
+  if (dl){
+    try { await dl.save({ filename, data: blob }); }
+    catch(err){ if (err && err.code !== 'declined') showBanner('err', '<strong>Salvataggio non riuscito.</strong> ' + esc(err.message || err.code)); }
+    return;
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+const esc = s => String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+const RE_DIACRITICI = /[̀-ͯ]/g;
+function norm(s){
+  return String(s == null ? '' : s)
+    .normalize('NFD').replace(RE_DIACRITICI,'').replace(/[̀-ͯ]/g,'')
+    .toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+}
+
+function romanToInt(r){
+  const s = String(r).toUpperCase().trim();
+  if (!/^[IVXLCDM]+$/.test(s)) return null;
+  let n = 0;
+  for (let i = 0; i < s.length; i++){
+    const v = ROMAN[s[i]], nx = ROMAN[s[i+1]];
+    n += (nx && nx > v) ? -v : v;
+  }
+  return n || null;
+}
+
+/* Numeri "sporchi": 1.234,56 · 1,234.56 · "€ 120.000" · "120000 si vende" */
+function toNumber(v){
+  if (v == null || v === '') return null;
+  if (typeof v === 'number') return isFinite(v) ? v : null;
+  let s = String(v).trim();
+  if (!/\d/.test(s)) return null;
+  s = s.replace(/[€\s ']/g,'');
+  const lastC = s.lastIndexOf(','), lastD = s.lastIndexOf('.');
+  if (lastC > -1 && lastD > -1){
+    s = lastC > lastD ? s.replace(/\./g,'').replace(',','.') : s.replace(/,/g,'');
+  } else if (lastC > -1){
+    s = (s.length - lastC - 1) === 3 && /^\d{1,3}(,\d{3})+$/.test(s) ? s.replace(/,/g,'') : s.replace(',','.');
+  } else if (lastD > -1){
+    if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g,'');
+  }
+  const m = s.match(/-?\d+(\.\d+)?/);
+  if (!m) return null;
+  const n = parseFloat(m[0]);
+  return isFinite(n) ? n : null;
+}
+
+/* =========================================================================
+   2. ARCHIVIO LOCALE (quotazioni, aliquote, rendite, valori manuali)
+   ========================================================================= */
+
+const KB_KEY = 'fab-valutazione-kb-v1';
+let KB = { quotes:[], imu:[], rendite:[], manual:{} };
+
+function loadKB(){
+  try {
+    const raw = localStorage.getItem(KB_KEY);
+    if (raw){
+      const o = JSON.parse(raw);
+      KB = Object.assign({ quotes:[], imu:[], rendite:[], manual:{} }, o);
+    }
+    const c = localStorage.getItem(KB_KEY + '-cfg');
+    if (c) CFG = Object.assign({}, DEFAULT_CFG, JSON.parse(c));
+  } catch(e){ /* archivio non leggibile: si riparte da vuoto */ }
+}
+function saveKB(){
+  try {
+    localStorage.setItem(KB_KEY, JSON.stringify(KB));
+    localStorage.setItem(KB_KEY + '-cfg', JSON.stringify(CFG));
+  } catch(e){ /* quota o storage bloccato: l'app resta usabile in memoria */ }
+}
+
+const quoteKey = (comune, dest) => norm(comune) + '|' + dest;
+
+function findQuote(p){
+  const cands = KB.quotes.filter(q =>
+    norm(q.comune) === norm(p.comune) && (q.destinazione === p.destCanon || q.destinazione === '*'));
+  if (!cands.length) return null;
+  const zn = norm(p.zona || p.indirizzo || '');
+  const zoned = cands.filter(q => q.zona && zn && zn.includes(norm(q.zona)));
+  const pool = zoned.length ? zoned : cands.filter(q => !q.zona);
+  const use = (pool.length ? pool : cands).slice();
+  use.sort((a,b) => (a.destinazione === '*' ? 1 : 0) - (b.destinazione === '*' ? 1 : 0)
+                 || String(b.data||'').localeCompare(String(a.data||'')));
+  return use[0];
+}
+function findImu(p){
+  const c = KB.imu.filter(r => norm(r.comune) === norm(p.comune));
+  if (!c.length) return null;
+  return c.find(r => norm(r.tipologia) === p.destCanon) ||
+         c.find(r => norm(r.tipologia) === 'ordinaria') || null;
+}
+function findRendita(p){
+  if (!p.cat) return null;
+  return KB.rendite.find(r =>
+    norm(r.comune) === norm(p.comune) &&
+    String(r.foglio) === String(p.cat.foglio) &&
+    String(r.particella) === String(p.cat.particella) &&
+    String(r.subalterno) === String(p.cat.subalterno)) || null;
+}
+
+/* =========================================================================
+   3. LETTURA DEL FILE EXCEL
+   ========================================================================= */
+
+const HEADER_SYN = {
+  fab:        ['fondo','fab','classe fab','comparto'],
+  banca:      ['banca','istituto','originator','cedente'],
+  comune:     ['comune codice frazione','comune','citta','localita','ubicazione comune'],
+  indirizzo:  ['indirizzo','via','ubicazione','indirizzo immobile'],
+  provincia:  ['provincia','prov','pv','sigla provincia'],
+  regione:    ['regione'],
+  destinazione:['destinazione d uso prevalente','destinazione d uso','destinazione','tipologia','categoria immobile'],
+  mq:         ['sup lorde','sup lorda','superficie lorda','superficie','mq','metri quadri','sup'],
+  stato:      ['stato occupazionale','stato','occupazione'],
+  prezzo:     ['asking price','asking','prezzo richiesto','prezzo','base d asta','valore di libro'],
+  realizzo:   ['a quanto si vende'],
+  zona:       ['zona','frazione','localita zona'],
+  rendita:    ['rendita catastale','rendita'],
+  catcat:     ['categoria catastale','cat catastale'],
+  foglio:     ['foglio'], particella:['particella','mappale'], subalterno:['subalterno','sub']
+};
+
+function matchHeader(cell){
+  const n = norm(cell);
+  if (!n) return null;
+  for (const [field, syns] of Object.entries(HEADER_SYN)){
+    for (const s of syns){
+      if (n === s) return { field, score:3 };
+    }
+  }
+  for (const [field, syns] of Object.entries(HEADER_SYN)){
+    for (const s of syns){
+      if (n.startsWith(s) || (s.length > 5 && n.includes(s))) return { field, score:2 };
+    }
+  }
+  return null;
+}
+
+/* Trova la riga d'intestazione: quella con più corrispondenze nelle prime 40 righe. */
+function detectHeader(rows){
+  let best = { row:-1, map:null, score:0 };
+  const lim = Math.min(rows.length, 40);
+  for (let r = 0; r < lim; r++){
+    const map = {}; let score = 0;
+    (rows[r] || []).forEach((cell, c) => {
+      const m = matchHeader(cell);
+      if (m && map[m.field] === undefined){ map[m.field] = c; score += m.score; }
+    });
+    if (score > best.score) best = { row:r, map, score };
+  }
+  return best.score >= 8 ? best : null;
+}
+
+/* "FAB I - BERGAMO - ROMANO DI LOMBARDIA - F14-P9470-S104" */
+const RE_COMPOSITE = /^FAB\s+([IVXLCDM]+|\d+)\s*-\s*([^-]+?)\s*-\s*(.+?)\s*-\s*F\s*([\w]+)\s*-\s*P\s*([\w]+)\s*-\s*S\s*([\w]+)\s*$/i;
+
+function parseFab(colA, colC){
+  let raw = String(colA || '').trim();
+  let src = 'A';
+  let m = raw.match(/FAB\s*([IVXLCDM]+|\d+)/i);
+  if (!m && colC){
+    const c = String(colC).match(/^FAB\s+([IVXLCDM]+|\d+)\b/i);
+    if (c){ m = c; src = 'C'; }
+  }
+  if (!m) return { label: raw || null, num: null, incompleto: !!raw, src:'A' };
+  const t = m[1];
+  const num = /^\d+$/.test(t) ? parseInt(t,10) : romanToInt(t);
+  return { label:'FAB ' + (num != null ? num : t), num, incompleto:false, src, originale:t };
+}
+
+/* Interpreta la colonna "a quanto si vende" */
+function parseRealizzo(txt){
+  if (txt == null || txt === '') return null;
+  const s = String(txt).trim();
+  const out = { testo:s, valore:null, cumulativo:false, ambiguo:false };
+  if (/\btutt[oi]\b|cumulat/i.test(s)) out.cumulativo = true;
+  const nums = s.match(/\d[\d.\s']*\d|\d/g) || [];
+  if (/\d\s*\/\s*\d/.test(s) && nums.length > 1) out.ambiguo = true;
+  const big = nums.map(toNumber).filter(n => n != null && n >= 1000);
+  if (big.length) out.valore = big[0];
+  return out;
+}
+
+function buildRow(arr, map, rowIdx){
+  const g = f => (map[f] === undefined ? '' : (arr[map[f]] == null ? '' : arr[map[f]]));
+
+  const rawC   = String(g('comune')).trim();
+  const rawA   = String(g('fab')).trim();
+  const comp   = rawC.match(RE_COMPOSITE);
+
+  let comune = rawC, provincia = String(g('provincia')).trim(), cat = null;
+  if (comp){
+    provincia = comp[2].trim();
+    comune    = comp[3].trim();
+    cat = { foglio:comp[4], particella:comp[5], subalterno:comp[6],
+            codice:'F'+comp[4]+'-P'+comp[5]+'-S'+comp[6] };
+  } else if (map.foglio !== undefined && g('foglio')){
+    cat = { foglio:String(g('foglio')), particella:String(g('particella')), subalterno:String(g('subalterno')) };
+    cat.codice = 'F'+cat.foglio+'-P'+cat.particella+'-S'+cat.subalterno;
+  }
+
+  const indirizzo = comp ? '' : String(g('indirizzo')).trim();
+  const regione   = String(g('regione')).trim();
+  const banca     = String(g('banca')).trim();
+  const stato     = String(g('stato')).trim();
+  const zona      = String(g('zona')).trim();
+  const destRaw   = String(g('destinazione')).trim();
+
+  // riga vuota?
+  if (!comune && !indirizzo && !rawA && !destRaw && g('prezzo') === '' && g('mq') === '') return null;
+
+  const fab  = parseFab(rawA, rawC);
+  const mqN  = toNumber(g('mq'));
+  const prRaw = g('prezzo');
+  const prN  = toNumber(prRaw);
+  const prezzoTesto = (typeof prRaw === 'string' && prN == null) ? prRaw.trim() : null;
+
+  let destCanon = 'sconosciuto';
+  if (destRaw){
+    if (/^altro$|^varie$/i.test(destRaw.trim())) destCanon = 'altro';
+    else { const hit = DEST_RULES.find(([,re]) => re.test(destRaw)); destCanon = hit ? hit[0] : 'sconosciuto'; }
+  }
+
+  return {
+    excelRow: rowIdx + 1,
+    fab, banca, comune, provincia, regione, indirizzo, zona, cat, stato,
+    destRaw, destCanon,
+    mq: (mqN != null && mqN > 0) ? mqN : null,
+    mqRaw: g('mq'),
+    prezzoOriginale: (prN != null && prN > 0) ? prN : null,
+    prezzoTesto,
+    realizzo: parseRealizzo(g('realizzo')),
+    renditaFile: toNumber(g('rendita')),
+    catCatFile: String(g('catcat')).trim() || null
+  };
+}
+
+/* =========================================================================
+   4. VALUTAZIONE DI UNA RIGA
+   ========================================================================= */
+
+function moltiplicatoreCatastale(categoria){
+  if (!categoria) return null;
+  const c = String(categoria).toUpperCase().replace(/\s/g,'').replace('/','');
+  if (c === 'A10') return MOLT_CAT.A10;
+  if (c === 'D5')  return MOLT_CAT.D5;
+  if (/^C[1234567]$/.test(c)) return MOLT_CAT['C' + c[1]] || null;
+  if (c[0] === 'A') return MOLT_CAT.A;
+  if (c[0] === 'B') return MOLT_CAT.B;
+  if (c[0] === 'D') return MOLT_CAT.D;
+  return null;
+}
+
+function valuta(p){
+  const notes = [];   // {t:'bad'|'warn'|'info', m:string}
+  const v = { note:notes, anomalia:false };
+
+  /* --- localizzazione --- */
+  const parts = [];
+  if (p.indirizzo) parts.push(p.indirizzo);
+  if (p.zona) parts.push(p.zona);
+  if (p.comune) parts.push(p.comune);
+  if (p.provincia) parts.push(p.provincia);
+  const query = parts.concat(['Italia']).join(', ');
+  v.query = query;
+  v.mapsUrl  = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
+  v.earthUrl = 'https://earth.google.com/web/search/' + encodeURIComponent(query);
+  v.hasCivico = /\d/.test(p.indirizzo || '');
+  v.locQualita = p.indirizzo ? (v.hasCivico ? 'civico' : 'via') : (p.comune ? 'comune' : 'nessuna');
+  if (v.locQualita === 'nessuna') notes.push({ t:'bad', m:'Localizzazione assente: il file non riporta né comune né indirizzo.' });
+  else if (v.locQualita === 'comune') notes.push({ t:'warn', m:'Solo il comune è noto: la posizione sulla mappa è approssimativa e non identifica l\'unità.' });
+  else if (v.locQualita === 'via') notes.push({ t:'warn', m:'Indirizzo senza numero civico: localizzazione parziale.' });
+
+  /* --- superficie --- */
+  if (p.mq == null){
+    notes.push({ t:'bad', m:'Superficie assente o pari a 0 nel file: impossibile calcolare €/m² e valore di rivendita per superficie.' });
+  } else {
+    const terreno = p.destCanon.startsWith('terreno');
+    if (!terreno && p.mq < 8){ notes.push({ t:'bad', m:'Superficie anomala (' + nfMq.format(p.mq) + ' m²) per un fabbricato: verificare il dato.' }); v.anomalia = true; }
+    if (!terreno && p.mq > 20000){ notes.push({ t:'bad', m:'Superficie anomala (' + nfMq.format(p.mq) + ' m²) per un fabbricato: possibile lotto cumulativo.' }); v.anomalia = true; }
+  }
+
+  /* --- prezzo di acquisto --- */
+  if (p.prezzoOriginale != null){
+    v.prezzoAcquisto = p.prezzoOriginale * (1 - CFG.sconto/100);
+    if (p.prezzoOriginale < 2000){ notes.push({ t:'bad', m:'Prezzo del file molto basso (' + eur(p.prezzoOriginale) + '): verificare che non sia un refuso.' }); v.anomalia = true; }
+  } else {
+    v.prezzoAcquisto = null;
+    v.prezzoMotivo = p.prezzoTesto
+      ? 'Nel file il prezzo è «' + p.prezzoTesto + '», non un importo.'
+      : 'Prezzo assente nel file.';
+    notes.push({ t:'bad', m:v.prezzoMotivo + ' Prezzo di acquisto non calcolabile.' });
+  }
+
+  /* --- destinazione --- */
+  if (!p.destRaw) notes.push({ t:'bad', m:'Destinazione d\'uso assente nel file.' });
+  else if (p.destCanon === 'altro') notes.push({ t:'warn', m:'Destinazione «Altro» nel file: non classificabile, nessuna quotazione di mercato è applicabile con certezza.' });
+  else if (p.destCanon === 'sconosciuto') notes.push({ t:'warn', m:'Destinazione «' + p.destRaw + '» non riconducibile a una categoria nota.' });
+
+  /* --- stato occupazionale --- */
+  if (p.stato && !/^liber/i.test(p.stato))
+    notes.push({ t:'warn', m:'Immobile ' + p.stato.toLowerCase() + ': lo stato occupazionale incide su tempi e prezzo di rivendita.' });
+
+  /* --- IMU --- */
+  v.imu = null; v.imuMotivo = [];
+  const rendRec = findRendita(p);
+  const rendita = p.renditaFile != null ? p.renditaFile : (rendRec ? toNumber(rendRec.rendita) : null);
+  const categoria = p.catCatFile || (rendRec ? rendRec.categoria : null);
+  const alq = findImu(p);
+  if (rendita == null) v.imuMotivo.push('rendita catastale');
+  if (!categoria && !p.destCanon.startsWith('terreno')) v.imuMotivo.push('categoria catastale');
+  if (!alq) v.imuMotivo.push('aliquota del comune');
+  if (rendita != null && alq){
+    if (p.destCanon === 'terreno_agricolo'){
+      const base = rendita * 1.25 * 135;                    // reddito dominicale rivalutato
+      v.imu = base * (toNumber(alq.aliquota) / 1000) / 2;
+      v.imuBase = base; v.imuFormula = 'RD × 1,25 × 135 × aliquota ÷ 2';
+      notes.push({ t:'warn', m:'Terreno agricolo: possibile esenzione IMU se condotto da coltivatore diretto/IAP o se in comune montano. Verificare.' });
+    } else {
+      const molt = moltiplicatoreCatastale(categoria);
+      if (molt == null){ v.imuMotivo.push('moltiplicatore per la categoria «' + categoria + '»'); }
+      else {
+        const base = rendita * 1.05 * molt;
+        v.imu = base * (toNumber(alq.aliquota) / 1000) / 2;
+        v.imuBase = base; v.imuFormula = 'rendita × 1,05 × ' + molt + ' × ' + alq.aliquota + '‰ ÷ 2';
+      }
+    }
+    v.imuFonte = alq;
+  }
+
+  /* --- valore di rivendita --- */
+  v.rivendita = null; v.rivFonte = null; v.rivDettaglio = null; v.eurMq = null;
+
+  const man = KB.manual[manualKey(p)];
+  const r = p.realizzo;
+
+  if (man && toNumber(man.eurMq) != null && p.mq != null){
+    const em = toNumber(man.eurMq);
+    v.eurMq = em; v.rivendita = em * p.mq;
+    v.rivFonte = { kind:'E', tipo:man.tipo || 'manuale', label:(man.fonte || 'Inserimento manuale'), url:man.url || '', data:man.data || '' };
+    v.rivDettaglio = nfInt.format(em) + ' €/m² × ' + nfMq.format(p.mq) + ' m²';
+  } else if (man && toNumber(man.totale) != null){
+    v.rivendita = toNumber(man.totale);
+    v.rivFonte = { kind:'E', tipo:man.tipo || 'manuale', label:(man.fonte || 'Inserimento manuale'), url:man.url || '', data:man.data || '' };
+    v.rivDettaglio = 'valore totale inserito manualmente';
+    if (p.mq) v.eurMq = v.rivendita / p.mq;
+  } else if (r && r.valore != null && !r.cumulativo && !r.ambiguo){
+    v.rivendita = r.valore;
+    v.rivFonte = { kind:'F', tipo:'file', label:'Colonna «a quanto si vende» del file (info 09/2026)', url:'', data:'2026-09' };
+    v.rivDettaglio = 'realizzo indicato nel file';
+    if (p.mq) v.eurMq = v.rivendita / p.mq;
+  } else {
+    if (r && r.cumulativo){ notes.push({ t:'bad', m:'Il file indica un prezzo cumulativo su più unità («' + r.testo + '»): non attribuibile alla singola riga.' }); v.anomalia = true; }
+    if (r && r.ambiguo)   { notes.push({ t:'bad', m:'Il valore di realizzo nel file è un intervallo ambiguo («' + r.testo + '»): richiede conferma manuale.' }); v.anomalia = true; }
+    if (r && r.valore == null && r.testo) notes.push({ t:'warn', m:'Nota del file sul realizzo: «' + r.testo + '».' });
+
+    const q = findQuote(p);
+    if (q && p.mq != null){
+      const mn = toNumber(q.eur_mq_min), mx = toNumber(q.eur_mq_max);
+      if (mn != null || mx != null){
+        let base = (mn != null && mx != null) ? (mn + mx)/2 : (mn != null ? mn : mx);
+        let abb = 0;
+        if (norm(q.tipo) === 'annunci'){ abb = CFG.abbattimento/100; base = base * (1 - abb); }
+        v.eurMq = base; v.rivendita = base * p.mq;
+        v.quote = q; v.quoteMin = mn; v.quoteMax = mx; v.abbattuto = abb;
+        v.rivFonte = { kind: norm(q.tipo)==='omi' ? 'E':'S', tipo:q.tipo || 'manuale',
+                       label:(q.fonte || 'Quotazione importata'), url:q.url || '', data:q.data || '' };
+        v.rivDettaglio = nfInt.format(Math.round(base)) + ' €/m² × ' + nfMq.format(p.mq) + ' m²'
+          + (abb ? ' (abbattimento annunci −' + CFG.abbattimento + '%)' : '');
+      }
+    } else {
+      const mancano = [];
+      if (p.mq == null) mancano.push('superficie');
+      if (!q) mancano.push('quotazione €/m² per ' + (p.comune || 'comune ignoto') + ' / ' + (DEST_LABEL[p.destCanon] || 'destinazione ignota'));
+      v.rivMotivo = 'Mancano: ' + mancano.join(' e ') + '.';
+    }
+  }
+
+  /* --- controlli di plausibilità sui valori derivati --- */
+  if (v.rivendita != null && v.quote && p.mq){
+    const acqMq = v.prezzoAcquisto != null ? v.prezzoAcquisto / p.mq : null;
+    if (acqMq != null && v.quoteMax != null && acqMq > v.quoteMax){
+      notes.push({ t:'bad', m:'Il prezzo d\'acquisto (' + nfInt.format(Math.round(acqMq)) + ' €/m²) supera il massimo di quotazione della zona (' + nfInt.format(v.quoteMax) + ' €/m²).' });
+      v.anomalia = true;
+    }
+  }
+
+  /* --- agenzia, netto, moltiplicatore --- */
+  if (v.rivendita != null){
+    v.agenzia = v.rivendita * (CFG.agenzia/100);
+    v.netta = v.rivendita - v.agenzia;
+    if (v.prezzoAcquisto != null && v.prezzoAcquisto > 0){
+      v.mult = v.netta / v.prezzoAcquisto;
+      if (v.mult > 5){ notes.push({ t:'bad', m:'Moltiplicatore fuori scala (' + nfX.format(v.mult) + '×): verificare superficie, prezzo e quotazione prima di procedere.' }); v.anomalia = true; }
+    }
+  }
+
+  v.colore = v.mult == null ? 'n' : (v.mult >= 1 ? 'g' : (v.mult >= 0.5 ? 'y' : 'r'));
+
+  /* --- affidabilità --- */
+  let sc = 0;
+  if (v.locQualita === 'civico') sc += 2; else if (v.locQualita === 'via') sc += 1; else if (v.locQualita === 'comune') sc += 0.5;
+  if (p.mq != null) sc += 2;
+  if (p.destCanon !== 'altro' && p.destCanon !== 'sconosciuto') sc += 1;
+  if (v.prezzoAcquisto != null) sc += 1;
+
+  if (v.rivFonte){
+    const t = norm(v.rivFonte.tipo);
+    sc += t === 'file' ? 3 : t === 'omi' ? 2.5 : t === 'perizia' ? 2.5 : t === 'manuale' ? 2 : 1.5;
+    if (v.rivFonte.data){
+      const d = new Date(v.rivFonte.data.length === 7 ? v.rivFonte.data + '-01' : v.rivFonte.data);
+      if (!isNaN(d)){
+        const mesi = (Date.now() - d.getTime()) / (1000*60*60*24*30.4);
+        if (mesi <= CFG.mesiValidita) sc += 0.5;
+        else notes.push({ t:'warn', m:'Quotazione datata (' + v.rivFonte.data + '): oltre ' + CFG.mesiValidita + ' mesi.' });
+      }
+    }
+    if (v.quote){
+      if (v.quote.zona) sc += 0.5;
+      const nc = toNumber(v.quote.comparabili);
+      if (nc != null && nc >= 3) sc += 0.5;
+    }
+  }
+  const nBad = notes.filter(n => n.t === 'bad').length;
+  sc -= nBad * 1.5;
+
+  v.score = sc;
+  if (!v.rivFonte)      { v.aff = 'NON VALUTABILE'; v.affCls = 'd'; }
+  else if (sc >= 6.5)   { v.aff = 'STIMA AFFIDABILE'; v.affCls = 'a'; }
+  else if (sc >= 4.5)   { v.aff = 'STIMA DA VERIFICARE'; v.affCls = 'b'; }
+  else                  { v.aff = 'STIMA POCO AFFIDABILE'; v.affCls = 'c'; }
+
+  return v;
+}
+
+const manualKey = p => norm(p.comune) + '#' + (p.cat ? p.cat.codice : norm(p.indirizzo)) + '#' + p.excelRow;
+
+/* =========================================================================
+   5. STATO E RENDERING
+   ========================================================================= */
+
+let RAW = [];            // righe grezze del foglio
+let ITEMS = [];          // {p, v}
+let VIEW = [];
+let DEMO = true;
+let page = 1;
+let sortKey = null, sortDir = 1;
+let workbook = null;
+
+const COLS = [
+  { k:'fab',    t:'FAB',                        cls:'' },
+  { k:'loc',    t:'Comune / Zona / Indirizzo',  cls:'' },
+  { k:'dest',   t:"Destinazione d'uso",         cls:'' },
+  { k:'mq',     t:'Metri quadri',               cls:'num' },
+  { k:'acq',    t:'Prezzo di acquisto',         cls:'num' },
+  { k:'imu',    t:'Costo IMU 6 mesi',           cls:'num' },
+  { k:'riv',    t:'Valore di rivendita',        cls:'num' },
+  { k:'age',    t:() => 'Costo agenzia ' + String(CFG.agenzia).replace('.',',') + '%', cls:'num' },
+  { k:'net',    t:'Rivendita netta',            cls:'num' },
+  { k:'mult',   t:'Moltiplicatore',             cls:'num' },
+  { k:'aff',    t:'Valutazione / affidabilità', cls:'' }
+];
+
+function sortValue(it, k){
+  const { p, v } = it;
+  switch(k){
+    case 'fab':  return p.fab.num == null ? 9999 : p.fab.num;
+    case 'loc':  return norm(p.comune + ' ' + p.indirizzo);
+    case 'dest': return DEST_LABEL[p.destCanon] || '';
+    case 'mq':   return p.mq == null ? -1 : p.mq;
+    case 'acq':  return v.prezzoAcquisto == null ? -1 : v.prezzoAcquisto;
+    case 'imu':  return v.imu == null ? -1 : v.imu;
+    case 'riv':  return v.rivendita == null ? -1 : v.rivendita;
+    case 'age':  return v.agenzia == null ? -1 : v.agenzia;
+    case 'net':  return v.netta == null ? -1 : v.netta;
+    case 'mult': return v.mult == null ? -1 : v.mult;
+    case 'aff':  return v.score == null ? -99 : v.score;
+  }
+  return 0;
+}
+
+function renderHead(){
+  document.getElementById('thr').innerHTML = COLS.map(c => {
+    const active = sortKey === c.k;
+    const title = typeof c.t === 'function' ? c.t() : c.t;
+    return '<th class="' + c.cls + '" data-k="' + c.k + '"' + (active ? ' aria-sort="' + (sortDir>0?'ascending':'descending') + '"' : '') +
+      '>' + esc(title) + '<span class="ar">' + (active ? (sortDir>0?'▲':'▼') : '⇅') + '</span></th>';
+  }).join('');
+}
+
+function applyFilters(){
+  const colore = document.querySelector('#segColore button[aria-pressed="true"]').dataset.c;
+  const q = norm(document.getElementById('q').value);
+  const fFab = document.getElementById('fFab').value;
+  const fReg = document.getElementById('fReg').value;
+  const fDest = document.getElementById('fDest').value;
+  const onlyAnom = document.getElementById('fAnom').checked;
+
+  VIEW = ITEMS.filter(({p,v}) => {
+    if (colore !== 'all' && v.colore !== colore) return false;
+    if (fFab && (p.fab.label || '') !== fFab) return false;
+    if (fReg && p.regione !== fReg) return false;
+    if (fDest && p.destCanon !== fDest) return false;
+    if (onlyAnom && !v.anomalia) return false;
+    if (q){
+      const hay = norm([p.comune, p.indirizzo, p.provincia, p.regione, p.banca,
+                        p.destRaw, p.fab.label, p.cat ? p.cat.codice : ''].join(' '));
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  if (sortKey){
+    VIEW.sort((a,b) => {
+      const x = sortValue(a, sortKey), y = sortValue(b, sortKey);
+      if (typeof x === 'string') return sortDir * x.localeCompare(y, 'it');
+      return sortDir * (x - y);
+    });
+  }
+  page = 1;
+  renderBody();
+  renderPager();
+}
+
+function cellNA(motivo, label){
+  return '<span class="na">' + esc(label || 'DATI INSUFFICIENTI') + '</span>' +
+         (motivo ? '<span class="sub">' + esc(motivo) + '</span>' : '');
+}
+
+function rowHtml(it, i){
+  const { p, v } = it;
+  const flag = v.anomalia ? '<b class="flagmark" title="Anomalia rilevata: apra la riga per il dettaglio">⚠</b>' : '';
+
+  // FAB
+  const fabTxt = p.fab.label
+    ? esc(p.fab.label) + (p.fab.incompleto ? '<span class="sub">numero non presente nel file</span>' : '')
+    : '<span class="na">—</span>';
+
+  // Localizzazione
+  let loc;
+  if (v.locQualita === 'nessuna'){
+    loc = cellNA('Il file non riporta comune né indirizzo.', 'LOCALIZZAZIONE ASSENTE');
+  } else {
+    const linea1 = p.indirizzo || p.comune;
+    const linea2 = [p.indirizzo ? p.comune : '', p.provincia ? '(' + p.provincia + ')' : '', p.regione]
+      .filter(Boolean).join(' ');
+    loc = '<a class="loc-a" href="' + esc(v.mapsUrl) + '" target="_blank" rel="noopener">' + esc(linea1) + '</a>' +
+          (linea2 ? '<span class="loc-b">' + esc(linea2) + '</span>' : '') +
+          (p.cat ? '<span class="cat">' + esc(p.cat.codice) + '</span>' : '') +
+          '<span class="maplinks">' +
+            '<a href="' + esc(v.mapsUrl) + '" target="_blank" rel="noopener">Maps</a>' +
+            '<a href="' + esc(v.earthUrl) + '" target="_blank" rel="noopener">Earth</a>' +
+          '</span>' +
+          (v.locQualita !== 'civico' ? '<span class="sub">' + (v.locQualita === 'comune' ? 'solo comune — posizione approssimativa' : 'senza civico') + '</span>' : '');
+  }
+
+  // Destinazione
+  const dest = p.destRaw
+    ? '<span class="pill' + (p.destCanon === 'altro' || p.destCanon === 'sconosciuto' ? ' dim' : '') + '">' + esc(DEST_LABEL[p.destCanon] || p.destRaw) + '</span>' +
+      (norm(DEST_LABEL[p.destCanon]) !== norm(p.destRaw) ? '<span class="sub">file: ' + esc(p.destRaw) + '</span>' : '')
+    : cellNA('Colonna destinazione vuota.', 'NON INDICATA');
+
+  const mq = p.mq != null
+    ? nfMq.format(p.mq) + ' m²<i class="src F">F</i>'
+    : cellNA(p.mqRaw === 0 || p.mqRaw === '0' ? 'Nel file la superficie è 0.' : 'Superficie assente nel file.');
+
+  const acq = v.prezzoAcquisto != null
+    ? eur(v.prezzoAcquisto) + '<i class="src C">C</i><span class="sub">' + eur(p.prezzoOriginale) + ' −' + CFG.sconto + '%</span>'
+    : cellNA(v.prezzoMotivo, 'PREZZO NON DISPONIBILE');
+
+  const imu = v.imu != null
+    ? eur(v.imu) + '<i class="src C">C</i><span class="sub">' + esc(v.imuFonte.fonte || 'aliquota importata') + '</span>'
+    : cellNA('Manca: ' + v.imuMotivo.join(', ') + '.', 'IMU NON CALCOLABILE');
+
+  let riv;
+  if (v.rivendita != null){
+    riv = eur(v.rivendita) + '<i class="src ' + v.rivFonte.kind + '">' + v.rivFonte.kind + '</i>' +
+          '<span class="sub">' + esc(v.rivDettaglio || '') + '</span>' +
+          '<span class="sub">' + esc(v.rivFonte.label) + '</span>';
+  } else {
+    riv = cellNA(v.rivMotivo || 'Nessuna fonte di mercato disponibile per questa riga.', 'STIMA NON AFFIDABILE — DATI INSUFFICIENTI');
+  }
+
+  const age  = v.agenzia != null ? eur(v.agenzia) + '<i class="src C">C</i>' : '<span class="na">—</span>';
+  const net  = v.netta != null ? eur(v.netta) + '<i class="src C">C</i>' : '<span class="na">—</span>';
+  const mult = v.mult != null ? nfX.format(v.mult) + '×' : '<span class="na">—</span>';
+
+  const aff = '<span class="rel ' + v.affCls + '">' + esc(v.aff) + '</span>' +
+              '<span class="relsub">' + (v.rivFonte ? esc(fonteTipoLabel(v.rivFonte.tipo)) : 'nessuna fonte di rivendita') + '</span>';
+
+  return '<tr class="row ' + v.colore + '" data-i="' + i + '" tabindex="0">' +
+    '<td class="fab"><span class="chev">▶</span>' + fabTxt + flag + '</td>' +
+    '<td>' + loc + '</td>' +
+    '<td>' + dest + '</td>' +
+    '<td class="num mq">' + mq + '</td>' +
+    '<td class="num money">' + acq + '</td>' +
+    '<td class="num money">' + imu + '</td>' +
+    '<td class="num money">' + riv + '</td>' +
+    '<td class="num money">' + age + '</td>' +
+    '<td class="num money">' + net + '</td>' +
+    '<td class="num mult">' + mult + '</td>' +
+    '<td>' + aff + '</td>' +
+  '</tr>';
+}
+
+function fonteTipoLabel(t){
+  const m = { file:'dato interno del file', omi:'quotazione OMI', annunci:'annunci di portale (prezzi richiesti)',
+              perizia:'perizia', manuale:'inserimento manuale con fonte' };
+  return m[norm(t)] || t;
+}
+
+function renderBody(){
+  const per = parseInt(document.getElementById('perPage').value, 10) || 0;
+  const start = per ? (page-1)*per : 0;
+  const slice = per ? VIEW.slice(start, start+per) : VIEW;
+  const tb = document.getElementById('tb');
+  if (!slice.length){
+    tb.innerHTML = '<tr><td colspan="11" style="padding:40px 22px;color:var(--ink-3)">Nessuna riga corrisponde ai filtri attivi.</td></tr>';
+    return;
+  }
+  tb.innerHTML = slice.map(it => rowHtml(it, it.idx)).join('');
+}
+
+function renderPager(){
+  const per = parseInt(document.getElementById('perPage').value, 10) || 0;
+  const tot = VIEW.length;
+  const pages = per ? Math.max(1, Math.ceil(tot/per)) : 1;
+  const el = document.getElementById('pager');
+  el.innerHTML =
+    '<span><b>' + nfInt.format(tot) + '</b> righe visualizzate su ' + nfInt.format(ITEMS.length) + ' lette dal file</span>' +
+    (pages > 1
+      ? '<span class="spacer"></span><button class="btn" id="pgPrev"' + (page<=1?' disabled':'') + '>← Precedenti</button>' +
+        '<span>Pagina ' + page + ' di ' + pages + '</span>' +
+        '<button class="btn" id="pgNext"' + (page>=pages?' disabled':'') + '>Successive →</button>'
+      : '');
+  const pv = document.getElementById('pgPrev'), nx = document.getElementById('pgNext');
+  if (pv) pv.onclick = () => { page--; renderBody(); renderPager(); window.scrollTo({top:0}); };
+  if (nx) nx.onclick = () => { page++; renderBody(); renderPager(); window.scrollTo({top:0}); };
+}
+
+function renderStats(){
+  const c = { g:0, y:0, r:0, n:0 };
+  let conPrezzo = 0, conMq = 0, conRiv = 0, anom = 0;
+  ITEMS.forEach(({p,v}) => {
+    c[v.colore]++;
+    if (v.prezzoAcquisto != null) conPrezzo++;
+    if (p.mq != null) conMq++;
+    if (v.rivendita != null) conRiv++;
+    if (v.anomalia) anom++;
+  });
+  document.getElementById('stats').innerHTML = [
+    ['Immobili letti', nfInt.format(ITEMS.length), ''],
+    ['Con superficie', nfInt.format(conMq), ''],
+    ['Con prezzo acquisto', nfInt.format(conPrezzo), ''],
+    ['Con valore rivendita', nfInt.format(conRiv), ''],
+    ['Verdi ≥ 1,0×', nfInt.format(c.g), 'g'],
+    ['Gialli 0,5–1,0×', nfInt.format(c.y), 'y'],
+    ['Rossi < 0,5×', nfInt.format(c.r), 'r'],
+    ['Non valutabili', nfInt.format(c.n), 'n'],
+    ['Con anomalie', nfInt.format(anom), anom ? 'r' : '']
+  ].map(([lab, val, cls]) =>
+    '<div class="stat ' + cls + '"><b>' + val + '</b><span>' + lab + '</span></div>').join('');
+}
+
+function fillSelects(){
+  const uniq = (arr) => Array.from(new Set(arr.filter(Boolean))).sort((a,b)=>String(a).localeCompare(String(b),'it'));
+  const set = (id, vals, labFn, placeholder) => {
+    const el = document.getElementById(id);
+    const cur = el.value;
+    el.innerHTML = '<option value="">' + placeholder + '</option>' +
+      vals.map(v => '<option value="' + esc(v) + '">' + esc(labFn ? labFn(v) : v) + '</option>').join('');
+    el.value = cur;
+  };
+  const fabs = uniq(ITEMS.map(i => i.p.fab.label))
+    .sort((a,b) => (parseInt(String(a).replace(/\D/g,''),10)||999) - (parseInt(String(b).replace(/\D/g,''),10)||999));
+  set('fFab', fabs, null, 'Tutti');
+  set('fReg', uniq(ITEMS.map(i => i.p.regione)), null, 'Tutte');
+  set('fDest', uniq(ITEMS.map(i => i.p.destCanon)), v => DEST_LABEL[v] || v, 'Tutte');
+}
+
+/* =========================================================================
+   6. RIGA DI DETTAGLIO
+   ========================================================================= */
+
+function searchLinks(p){
+  const g = q => 'https://www.google.com/search?q=' + encodeURIComponent(q);
+  const com = p.comune || '', dest = DEST_LABEL[p.destCanon] || p.destRaw || '';
+  const L = [];
+  L.push(['Google Maps', 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([p.indirizzo, com, p.provincia, 'Italia'].filter(Boolean).join(', '))]);
+  L.push(['Google Earth', 'https://earth.google.com/web/search/' + encodeURIComponent([p.indirizzo, com, p.provincia, 'Italia'].filter(Boolean).join(', '))]);
+  if (com){
+    L.push(['Quotazioni OMI', g('quotazioni OMI agenzia entrate ' + com + ' ' + dest)]);
+    L.push(['Immobiliare.it', g('site:immobiliare.it vendita ' + dest + ' ' + com)]);
+    L.push(['Idealista', g('site:idealista.it vendita ' + dest + ' ' + com)]);
+    L.push(['Aliquota IMU ' + com, g('aliquota IMU delibera comune di ' + com + ' ' + (p.provincia||'') + ' ' + new Date().getFullYear())]);
+  }
+  if (p.cat) L.push(['Visura catastale', g('visura catastale ' + com + ' foglio ' + p.cat.foglio + ' particella ' + p.cat.particella + ' sub ' + p.cat.subalterno)]);
+  return L;
+}
+
+function detailHtml(it, idx){
+  const { p, v } = it;
+  const man = KB.manual[manualKey(p)] || {};
+
+  const provenienza = [
+    ['Riga Excel', p.excelRow],
+    ['FAB', (p.fab.label || '—') + (p.fab.src === 'C' ? ' (dalla colonna comune)' : '')],
+    ['Banca / originator', p.banca || '—'],
+    ['Comune', p.comune || '—'],
+    ['Provincia', p.provincia || '—'],
+    ['Regione', p.regione || '—'],
+    ['Indirizzo', p.indirizzo || '— (non presente)'],
+    ['Identificativo catastale', p.cat ? p.cat.codice : '—'],
+    ['Destinazione (file)', p.destRaw || '—'],
+    ['Superficie lorda (file)', p.mq != null ? nfMq.format(p.mq) + ' m²' : String(p.mqRaw || '—')],
+    ['Stato occupazionale', p.stato || '—'],
+    ['ASKING PRICE (file)', p.prezzoOriginale != null ? eur(p.prezzoOriginale) : (p.prezzoTesto || '—')],
+    ['«A quanto si vende»', p.realizzo ? p.realizzo.testo : '—']
+  ];
+
+  const calcoli = [];
+  if (v.prezzoAcquisto != null) calcoli.push(['Prezzo di acquisto', eur(p.prezzoOriginale) + ' × ' + ((100-CFG.sconto)/100).toString().replace('.',',') + ' = ' + eur(v.prezzoAcquisto)]);
+  if (v.rivendita != null){
+    calcoli.push(['Valore di rivendita', eur(v.rivendita)]);
+    if (v.eurMq != null) calcoli.push(['€/m² applicato', nfInt.format(Math.round(v.eurMq)) + ' €/m²']);
+    if (v.quote && v.quoteMin != null && v.quoteMax != null)
+      calcoli.push(['Intervallo quotazione', nfInt.format(v.quoteMin) + '–' + nfInt.format(v.quoteMax) + ' €/m²' +
+        (p.mq ? ' → ' + eur(v.quoteMin*p.mq) + '–' + eur(v.quoteMax*p.mq) : '')]);
+    calcoli.push(['Costo agenzia ' + CFG.agenzia + '%', eur(v.agenzia)]);
+    calcoli.push(['Rivendita netta', eur(v.rivendita) + ' − ' + eur(v.agenzia) + ' = ' + eur(v.netta)]);
+  }
+  if (v.mult != null) calcoli.push(['Moltiplicatore', eur(v.netta) + ' ÷ ' + eur(v.prezzoAcquisto) + ' = ' + nfX.format(v.mult) + '×']);
+  if (v.imu != null) calcoli.push(['IMU 6 mesi', v.imuFormula + ' = ' + eur(v.imu)]);
+  calcoli.push(['Punteggio affidabilità', nfX.format(v.score) + ' → ' + v.aff]);
+
+  const fonti = [];
+  fonti.push(['Anagrafica immobile', 'file Excel caricato, riga ' + p.excelRow]);
+  if (v.rivFonte) fonti.push(['Valore di rivendita', fonteTipoLabel(v.rivFonte.tipo) + ' — ' + v.rivFonte.label + (v.rivFonte.data ? ' (' + v.rivFonte.data + ')' : '')]);
+  else fonti.push(['Valore di rivendita', 'nessuna fonte — non stimato']);
+  if (v.imuFonte) fonti.push(['Aliquota IMU', v.imuFonte.fonte + (v.imuFonte.anno ? ' — ' + v.imuFonte.anno : '')]);
+
+  const dl = rows => '<dl class="dl">' + rows.map(([k,val]) =>
+    '<dt>' + esc(k) + '</dt><dd>' + esc(val) + '</dd>').join('') + '</dl>';
+
+  const noteHtml = v.note.length
+    ? '<ul class="notelist">' + v.note.map(n => '<li class="' + n.t + '">' + esc(n.m) + '</li>').join('') + '</ul>'
+    : '<p class="hint">Nessuna anomalia o carenza rilevata.</p>';
+
+  const links = '<div class="linkgrid">' + searchLinks(p).map(([t,u]) =>
+    '<a href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(t) + '</a>').join('') + '</div>';
+
+  const editor =
+    '<div class="form-row">' +
+      '<input type="number" step="1" placeholder="€/m²" id="m-eurmq-' + idx + '" value="' + esc(man.eurMq || '') + '">' +
+      '<input type="number" step="1" placeholder="oppure totale €" id="m-tot-' + idx + '" value="' + esc(man.totale || '') + '">' +
+      '<select id="m-tipo-' + idx + '">' +
+        ['omi','annunci','perizia','manuale'].map(t =>
+          '<option value="' + t + '"' + (norm(man.tipo) === t ? ' selected' : '') + '>' + t + '</option>').join('') +
+      '</select>' +
+    '</div>' +
+    '<div class="form-row">' +
+      '<input class="wide" placeholder="Fonte (es. OMI 1° sem. 2026 / 8 annunci Immobiliare)" id="m-fonte-' + idx + '" value="' + esc(man.fonte || '') + '">' +
+      '<input type="date" id="m-data-' + idx + '" value="' + esc(man.data || '') + '">' +
+    '</div>' +
+    '<div class="form-row">' +
+      '<input class="wide" placeholder="URL della fonte" id="m-url-' + idx + '" value="' + esc(man.url || '') + '">' +
+      '<button class="btn btn-primary" data-save="' + idx + '">Salva</button>' +
+      '<button class="btn" data-clear="' + idx + '">Rimuovi</button>' +
+    '</div>' +
+    '<p class="hint">Il valore inserito qui vale solo per questa riga e prevale su ogni altra fonte. Per applicare un €/m² a tutto un comune, importi un CSV di quotazioni da <b>Quotazioni &amp; IMU</b>.</p>';
+
+  const imuEditor = v.imu == null
+    ? '<p class="hint"><b>Perché non è calcolabile — manca:</b> ' + esc(v.imuMotivo.join(', ')) + '.<br>' +
+      'Base imponibile IMU = rendita catastale × 1,05 × moltiplicatore di categoria. ' +
+      'Il file di portafoglio non contiene rendita né categoria catastale; l\'aliquota va presa dalla delibera del comune.</p>'
+    : '<p class="hint"><b>Formula applicata:</b> ' + esc(v.imuFormula) + '<br>Base imponibile: ' + eur(v.imuBase) + '</p>';
+
+  return '<tr class="detailrow"><td colspan="11"><div class="detail">' +
+    '<div class="dsec"><h4>Dati originali del file</h4>' + dl(provenienza) + '</div>' +
+    '<div class="dsec"><h4>Calcoli del programma</h4>' + dl(calcoli) + '</div>' +
+    '<div class="dsec"><h4>Controlli e dati mancanti</h4>' + noteHtml + '</div>' +
+    '<div class="dsec"><h4>Fonti utilizzate</h4>' + dl(fonti) + '<h4 style="margin-top:14px">IMU</h4>' + imuEditor + '</div>' +
+    '<div class="dsec"><h4>Ricerca di mercato</h4>' + links +
+      '<p class="hint">I link sono costruiti sui dati reali della riga. Il programma non interroga da solo i portali: consulti la fonte e inserisca il valore qui accanto.</p></div>' +
+    '<div class="dsec"><h4>Inserisci il valore di rivendita con la sua fonte</h4>' + editor + '</div>' +
+  '</div></td></tr>';
+}
+
+/* =========================================================================
+   7. EVENTI
+   ========================================================================= */
+
+document.getElementById('tb').addEventListener('click', ev => {
+  const saveBtn = ev.target.closest('[data-save]');
+  if (saveBtn){ saveManual(parseInt(saveBtn.dataset.save,10)); return; }
+  const clrBtn = ev.target.closest('[data-clear]');
+  if (clrBtn){ clearManual(parseInt(clrBtn.dataset.clear,10)); return; }
+  if (ev.target.closest('a') || ev.target.closest('input') || ev.target.closest('select')) return;
+  const tr = ev.target.closest('tr.row');
+  if (tr) toggleDetail(tr);
+});
+document.getElementById('tb').addEventListener('keydown', ev => {
+  if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.classList.contains('row')){
+    ev.preventDefault(); toggleDetail(ev.target);
+  }
+});
+
+function toggleDetail(tr){
+  const nxt = tr.nextElementSibling;
+  if (nxt && nxt.classList.contains('detailrow')){ nxt.remove(); tr.classList.remove('open'); return; }
+  document.querySelectorAll('tr.detailrow').forEach(e => e.remove());
+  document.querySelectorAll('tr.row.open').forEach(e => e.classList.remove('open'));
+  const idx = parseInt(tr.dataset.i, 10);
+  tr.classList.add('open');
+  tr.insertAdjacentHTML('afterend', detailHtml(ITEMS[idx], idx));
+}
+
+function saveManual(idx){
+  const p = ITEMS[idx].p;
+  const val = id => (document.getElementById(id + '-' + idx) || {}).value || '';
+  const rec = {
+    eurMq: val('m-eurmq'), totale: val('m-tot'), tipo: val('m-tipo'),
+    fonte: val('m-fonte'), data: val('m-data'), url: val('m-url')
+  };
+  if (!rec.eurMq && !rec.totale){ alert('Inserisca un €/m² oppure un valore totale.'); return; }
+  if (!rec.fonte){ alert('Indichi la fonte: un valore senza fonte non viene accettato.'); return; }
+  KB.manual[manualKey(p)] = rec;
+  saveKB();
+  recompute();
+}
+function clearManual(idx){
+  delete KB.manual[manualKey(ITEMS[idx].p)];
+  saveKB(); recompute();
+}
+
+document.getElementById('thr').addEventListener('click', ev => {
+  const th = ev.target.closest('th'); if (!th) return;
+  const k = th.dataset.k;
+  if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = (k === 'mult' || k === 'aff') ? -1 : 1; }
+  renderHead(); applyFilters();
+});
+
+document.getElementById('segColore').addEventListener('click', ev => {
+  const b = ev.target.closest('button'); if (!b) return;
+  document.querySelectorAll('#segColore button').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+  applyFilters();
+});
+
+['q','fFab','fReg','fDest','fAnom'].forEach(id =>
+  document.getElementById(id).addEventListener('input', applyFilters));
+document.getElementById('perPage').addEventListener('change', () => { page = 1; renderBody(); renderPager(); });
+
+/* --- caricamento file --- */
+document.getElementById('file').addEventListener('change', ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = e => {
+    try {
+      workbook = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
+      const sel = document.getElementById('sheetSel');
+      sel.innerHTML = workbook.SheetNames.map(n => '<option>' + esc(n) + '</option>').join('');
+      sel.style.display = workbook.SheetNames.length > 1 ? '' : 'none';
+      // sceglie il foglio con l'intestazione riconoscibile migliore
+      let best = { name:workbook.SheetNames[0], score:-1 };
+      workbook.SheetNames.forEach(n => {
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[n], { header:1, raw:true, defval:'' });
+        const h = detectHeader(rows);
+        if (h && h.score > best.score) best = { name:n, score:h.score };
+      });
+      sel.value = best.name;
+      loadSheet(best.name, f.name);
+    } catch(err){
+      showBanner('err', '<strong>Impossibile leggere il file.</strong> ' + esc(err.message));
+    }
+  };
+  rd.readAsArrayBuffer(f);
+});
+document.getElementById('sheetSel').addEventListener('change', e => loadSheet(e.target.value));
+
+function loadSheet(name, fileName){
+  const rows = XLSX.utils.sheet_to_json(workbook.Sheets[name], { header:1, raw:true, defval:'' });
+  const h = detectHeader(rows);
+  if (!h){
+    showBanner('err', '<strong>Intestazioni non riconosciute nel foglio «' + esc(name) + '».</strong> Servono almeno le colonne comune/indirizzo, destinazione d\'uso, superficie e prezzo.');
+    return;
+  }
+  RAW = [];
+  for (let r = h.row + 1; r < rows.length; r++){
+    const item = buildRow(rows[r] || [], h.map, r);
+    if (item) RAW.push(item);
+  }
+  DEMO = false;
+  recompute();
+  const mancanti = ITEMS.filter(i => i.v.colore === 'n').length;
+  showBanner('ok', '<strong>' + nfInt.format(ITEMS.length) + ' immobili letti</strong> dal foglio «' + esc(name) + '»' +
+    (fileName ? ' di <em>' + esc(fileName) + '</em>' : '') +
+    ' — intestazioni alla riga ' + (h.row+1) + ', dati dalla riga ' + (h.row+2) + ' alla ' + (h.row+1+RAW.length) + '. ' +
+    nfInt.format(mancanti) + ' righe non producono un moltiplicatore: apra la riga per il motivo.');
+}
+
+function showBanner(cls, html){
+  const b = document.getElementById('banner');
+  b.className = 'banner ' + cls;
+  b.innerHTML = '<span>' + (cls === 'err' ? '⛔' : cls === 'ok' ? '✔' : '⚠') + '</span><div>' + html + '</div>';
+  b.hidden = false;
+}
+
+function recompute(){
+  ITEMS = RAW.map((p, i) => ({ p, v: valuta(p), idx:i }));
+  renderStats(); fillSelects(); renderHead(); applyFilters();
+}
+
+/* --- export CSV --- */
+document.getElementById('btnExport').addEventListener('click', () => {
+  const head = ['FAB','Comune','Provincia','Regione','Indirizzo','Identificativo catastale','Destinazione (file)',
+    'Destinazione (normalizzata)','Stato occupazionale','Metri quadri','Prezzo file','Prezzo acquisto',
+    'IMU 6 mesi','Valore rivendita','€/m² applicato','Fonte rivendita','Tipo fonte','Data fonte','URL fonte',
+    'Costo agenzia','Rivendita netta','Moltiplicatore','Colore','Valutazione','Anomalie / dati mancanti','Riga Excel','Link Maps'];
+  const q = s => '"' + String(s == null ? '' : s).replace(/"/g,'""') + '"';
+  const lines = [head.map(q).join(';')];
+  VIEW.forEach(({p,v}) => {
+    lines.push([
+      p.fab.label || '', p.comune, p.provincia, p.regione, p.indirizzo, p.cat ? p.cat.codice : '',
+      p.destRaw, DEST_LABEL[p.destCanon] || '', p.stato,
+      p.mq != null ? p.mq : 'DATI INSUFFICIENTI',
+      p.prezzoOriginale != null ? p.prezzoOriginale : (p.prezzoTesto || ''),
+      v.prezzoAcquisto != null ? Math.round(v.prezzoAcquisto) : 'PREZZO NON DISPONIBILE',
+      v.imu != null ? Math.round(v.imu) : 'IMU NON CALCOLABILE — manca: ' + v.imuMotivo.join(', '),
+      v.rivendita != null ? Math.round(v.rivendita) : 'STIMA NON AFFIDABILE — DATI INSUFFICIENTI',
+      v.eurMq != null ? Math.round(v.eurMq) : '',
+      v.rivFonte ? v.rivFonte.label : '', v.rivFonte ? v.rivFonte.tipo : '',
+      v.rivFonte ? v.rivFonte.data : '', v.rivFonte ? v.rivFonte.url : '',
+      v.agenzia != null ? Math.round(v.agenzia) : '',
+      v.netta != null ? Math.round(v.netta) : '',
+      v.mult != null ? nfX.format(v.mult) : '',
+      { g:'VERDE', y:'GIALLO', r:'ROSSO', n:'NON VALUTABILE' }[v.colore],
+      v.aff, v.note.map(n => n.m).join(' | '), p.excelRow, v.mapsUrl
+    ].map(q).join(';'));
+  });
+  saveFile('valutazione-immobili-fab.csv',
+    new Blob(['﻿' + lines.join('\r\n')], { type:'text/csv;charset=utf-8' }));
+});
+
+/* --- dialoghi --- */
+const dlgCfg = document.getElementById('dlgCfg'), dlgQuot = document.getElementById('dlgQuot');
+document.getElementById('btnCfg').onclick = () => {
+  document.getElementById('cfgSconto').value = CFG.sconto;
+  document.getElementById('cfgAgenzia').value = CFG.agenzia;
+  document.getElementById('cfgAbb').value = CFG.abbattimento;
+  document.getElementById('cfgMesi').value = CFG.mesiValidita;
+  dlgCfg.showModal();
+};
+document.getElementById('btnQuot').onclick = () => { refreshKbState(); dlgQuot.showModal(); };
+document.querySelectorAll('dialog [data-close]').forEach(b => b.onclick = () => b.closest('dialog').close());
+['cfgSconto','cfgAgenzia','cfgAbb','cfgMesi'].forEach(id => {
+  document.getElementById(id).addEventListener('change', e => {
+    const map = { cfgSconto:'sconto', cfgAgenzia:'agenzia', cfgAbb:'abbattimento', cfgMesi:'mesiValidita' };
+    const n = toNumber(e.target.value);
+    if (n != null){ CFG[map[id]] = n; saveKB(); recompute(); }
+  });
+});
+
+function refreshKbState(){
+  document.getElementById('kbState').innerHTML =
+    '<b>' + KB.quotes.length + '</b> quotazioni €/m² · <b>' + KB.imu.length + '</b> aliquote IMU · <b>' +
+    KB.rendite.length + '</b> rendite catastali · <b>' + Object.keys(KB.manual).length + '</b> valori inseriti a mano. ' +
+    'L\'archivio resta su questo browser e vale per tutti i file caricati.';
+}
+
+/* --- import CSV --- */
+function parseCSV(text){
+  const sep = (text.split('\n')[0].split(';').length > text.split('\n')[0].split(',').length) ? ';' : ',';
+  const rows = []; let cur = [], val = '', inQ = false;
+  for (let i = 0; i < text.length; i++){
+    const ch = text[i];
+    if (inQ){
+      if (ch === '"'){ if (text[i+1] === '"'){ val += '"'; i++; } else inQ = false; }
+      else val += ch;
+    } else if (ch === '"') inQ = true;
+    else if (ch === sep){ cur.push(val); val = ''; }
+    else if (ch === '\n'){ cur.push(val); rows.push(cur); cur = []; val = ''; }
+    else if (ch !== '\r') val += ch;
+  }
+  if (val || cur.length){ cur.push(val); rows.push(cur); }
+  if (!rows.length) return [];
+  const head = rows[0].map(h => norm(h).replace(/ /g,'_'));
+  return rows.slice(1).filter(r => r.some(c => String(c).trim()))
+    .map(r => { const o = {}; head.forEach((h,i) => o[h] = (r[i] || '').trim()); return o; });
+}
+function importCsv(inputId, target, mapFn, label){
+  document.getElementById(inputId).addEventListener('change', ev => {
+    const f = ev.target.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = e => {
+      try {
+        const recs = parseCSV(e.target.result).map(mapFn).filter(Boolean);
+        KB[target] = KB[target].concat(recs);
+        saveKB(); refreshKbState(); recompute();
+        showBanner('ok', '<strong>' + recs.length + ' ' + label + ' importate.</strong> Le righe interessate sono state ricalcolate.');
+      } catch(err){ showBanner('err', '<strong>CSV non leggibile.</strong> ' + esc(err.message)); }
+      ev.target.value = '';
+    };
+    rd.readAsText(f, 'utf-8');
+  });
+}
+importCsv('impQ', 'quotes', r => r.comune ? {
+  comune:r.comune, provincia:r.provincia||'', zona:r.zona||'',
+  destinazione: r.destinazione === '*' ? '*' : norm(r.destinazione).replace(/ /g,'_'),
+  eur_mq_min:r.eur_mq_min, eur_mq_max:r.eur_mq_max, tipo:r.tipo||'manuale',
+  fonte:r.fonte||'', url:r.url||'', data:r.data||'', comparabili:r.comparabili||''
+} : null, 'quotazioni');
+importCsv('impI', 'imu', r => r.comune ? {
+  comune:r.comune, provincia:r.provincia||'', tipologia:r.tipologia||'ordinaria',
+  aliquota:r.aliquota_per_mille || r.aliquota, fonte:r.fonte||'', url:r.url||'', anno:r.anno||''
+} : null, 'aliquote IMU');
+importCsv('impC', 'rendite', r => r.comune ? {
+  comune:r.comune, foglio:r.foglio, particella:r.particella, subalterno:r.subalterno,
+  categoria:r.categoria, rendita:r.rendita
+} : null, 'rendite catastali');
+
+document.getElementById('expKb').onclick = () => {
+  saveFile('archivio-valutazioni.json',
+    new Blob([JSON.stringify({ CFG, KB }, null, 2)], { type:'application/json' }));
+};
+document.getElementById('impKb').addEventListener('change', ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = e => {
+    try {
+      const o = JSON.parse(e.target.result);
+      if (o.KB) KB = Object.assign({ quotes:[], imu:[], rendite:[], manual:{} }, o.KB);
+      if (o.CFG) CFG = Object.assign({}, DEFAULT_CFG, o.CFG);
+      saveKB(); refreshKbState(); recompute();
+      showBanner('ok', '<strong>Archivio importato.</strong>');
+    } catch(err){ showBanner('err', '<strong>JSON non valido.</strong> ' + esc(err.message)); }
+    ev.target.value = '';
+  };
+  rd.readAsText(f, 'utf-8');
+});
+document.getElementById('clrKb').onclick = () => {
+  if (!confirm('Svuotare quotazioni, aliquote, rendite e valori inseriti a mano? L\'operazione non è reversibile.')) return;
+  KB = { quotes:[], imu:[], rendite:[], manual:{} };
+  saveKB(); refreshKbState(); recompute();
+};
+
+/* =========================================================================
+   8. AVVIO — righe di esempio dichiarate
+   ========================================================================= */
+
+loadKB();
+
+RAW = [
+  { excelRow:'—', fab:{label:'FAB — esempio', num:null, incompleto:false, src:'A'}, banca:'', comune:'Comune di esempio A',
+    provincia:'XX', regione:'Regione di esempio', indirizzo:'Via di esempio 1', zona:'', cat:null, stato:'Libero',
+    destRaw:'Residenziale', destCanon:'residenziale', mq:120, mqRaw:120, prezzoOriginale:100000, prezzoTesto:null,
+    realizzo:{ testo:'150000', valore:150000, cumulativo:false, ambiguo:false }, renditaFile:null, catCatFile:null },
+  { excelRow:'—', fab:{label:'FAB — esempio', num:null, incompleto:false, src:'A'}, banca:'', comune:'Comune di esempio B',
+    provincia:'XX', regione:'Regione di esempio', indirizzo:'Via di esempio 2', zona:'', cat:null, stato:'Locato',
+    destRaw:'Uffici', destCanon:'uffici', mq:200, mqRaw:200, prezzoOriginale:300000, prezzoTesto:null,
+    realizzo:{ testo:'200000', valore:200000, cumulativo:false, ambiguo:false }, renditaFile:null, catCatFile:null },
+  { excelRow:'—', fab:{label:'FAB — esempio', num:null, incompleto:false, src:'A'}, banca:'', comune:'Comune di esempio C',
+    provincia:'XX', regione:'Regione di esempio', indirizzo:'', zona:'', cat:null, stato:'Libero',
+    destRaw:'Altro', destCanon:'altro', mq:null, mqRaw:'', prezzoOriginale:null, prezzoTesto:'listino',
+    realizzo:null, renditaFile:null, catCatFile:null }
+];
+recompute();
+</script>
