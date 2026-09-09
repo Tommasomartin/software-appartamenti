@@ -17,19 +17,71 @@ interamente vuota nel file.
 Il vecchio file da 644 immobili non esiste più su disco e nessun suo dato è
 stato usato.
 
-## Ordine con cui viene deciso il valore di rivendita
+## Cosa contiene la colonna «Rivendita entro 12 mesi»
 
-1. **Prezzo già presente nel file** — colonna K `a quanto si vende info 09/2026`.
-   Dove c'è, viene usato **esattamente quello**: non viene ricalcolato né
-   sostituito. La quotazione OMI resta agganciata solo come termine di confronto.
-2. **Comparabili reali di mercato** — annunci di vendita verificati su
-   Immobiliare.it.
-3. **Quotazione OMI** dell'Agenzia delle Entrate.
-4. Se nessuna delle tre regge: **STIMA NON AFFIDABILE — DATI INSUFFICIENTI**,
-   con la motivazione scritta per esteso.
+**Non** il valore teorico di mercato, ma il **prezzo stimato realizzabile entro
+circa 12 mesi**. L'obiettivo del portafoglio è una rivendita rapida, non il
+massimo teorico.
 
-Il prezzo di acquisto non entra **mai** nel calcolo del valore di rivendita.
-Serve solo al costo dell'operazione e al moltiplicatore.
+Il programma tiene i tre valori **distinti** e li mostra tutti nel dettaglio di
+ogni riga:
+
+| | Valore | Cos'è |
+|---|---|---|
+| 1 | Prezzo richiesto nel file | `ASKING PRICE`: il prezzo a cui la banca offre l'immobile **senza averlo venduto** |
+| 1b | Prezzo dell'annuncio pubblico | dove l'immobile è su Immobiliare.it: anch'esso **non realizzato** |
+| 2 | Valore teorico di mercato | da comparabili o da quotazione OMI |
+| **3** | **Rivendita entro 12 mesi** | **il valore della colonna** |
+
+### Come si arriva al punto 3
+
+1. **Se il file indica già il prezzo** nella colonna K
+   `a quanto si vende info 09/2026`, vale **esattamente quello**: non viene
+   ricalcolato né sostituito. Le altre fonti restano solo come confronto.
+2. Altrimenti si prende come **tetto** il più basso fra il prezzo richiesto nel
+   file e il prezzo dell'annuncio pubblico: sono prezzi ai quali l'immobile
+   **non si è venduto**.
+3. Su quel tetto si applica il **coefficiente di realizzo**, e si prende il più
+   basso fra questo risultato e il valore teorico di mercato.
+4. Se mancano sia il prezzo richiesto sia una quotazione applicabile:
+   **STIMA NON AFFIDABILE — DATI INSUFFICIENTI**, con la motivazione per esteso.
+
+Il prezzo di acquisto non entra **mai** nel calcolo. Serve solo al costo
+dell'operazione e al moltiplicatore.
+
+### Il coefficiente di realizzo: 57%
+
+Non è un numero scelto a tavolino. È **misurato sulle 9 righe del file che
+riportano sia l'`ASKING PRICE` sia il prezzo a cui l'immobile si vende**:
+
+| Riga | Comune | Asking | Si vende | Rapporto |
+|---|---|---|---|---|
+| 32 | Modena | 300.000 | 100.000 | 33% |
+| 124 | Cividale del Friuli | 290.000 | 120.000 | 41% |
+| 126 | Udine | 170.000 | 80.000 | 47% |
+| 95 | Sassuolo | 940.000 | 550.000 | 59% |
+| 92 | Modena | 1.100.000 | 650.000 | 59% |
+| 33 | Soliera | 230.000 | 150.000 | 65% |
+| 102 | Salsomaggiore Terme | 105.000 | 70.000 | 67% |
+| 115 | Rio Saliceto | 75.000 | 60.000 | 80% |
+| 31 | Mirandola | 170.000 | 145.000 | 85% |
+
+Mediana **59%**, media 60%, **ponderato sui valori 57%**. Si adotta il
+ponderato, il più prudente. È modificabile in **Parametri → Coefficiente di
+realizzo entro 12 mesi**, e la tabella si ricalcola.
+
+### Il blocco di plausibilità
+
+Se il valore teorico di mercato supera il prezzo al quale l'immobile è già
+offerto senza essersi venduto, **il valore teorico viene bloccato e non usato**.
+La riga lo dichiara esplicitamente.
+
+Esempio, San Vito al Torre (riga 41): prezzo file 665.000 €, annuncio pubblico
+1.000.000 €, valore OMI 1.000.000 € → **rivendita stimata 379.050 €**, non un
+milione. Per proporre più del prezzo già offerto e non realizzato servirebbero
+comparabili recenti, realmente simili, a prezzi superiori.
+
+Il blocco è scattato su **64 righe su 122**.
 
 ## Come è stata ricavata la quotazione OMI
 
@@ -102,8 +154,9 @@ all'`ASKING PRICE` del file (da 0% a +61%): l'asking del file è il prezzo di
 cessione del portafoglio, l'annuncio è il prezzo al pubblico.
 
 **I prezzi degli annunci sono prezzi richiesti, non prezzi di vendita
-conclusi.** Il realizzo effettivo sarà di norma inferiore per effetto della
-trattativa. Il programma li espone come tali.
+conclusi**, e sono prezzi ai quali l'immobile **non si è venduto**. Per questo
+non diventano mai il valore di rivendita: entrano come *tetto* nel calcolo del
+punto 3.
 
 ## Fonti conservate
 
